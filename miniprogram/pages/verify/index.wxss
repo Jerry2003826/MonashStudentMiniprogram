@@ -1,0 +1,65 @@
+.page {
+  padding: 48rpx var(--spacing-page);
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 48rpx;
+}
+
+.hero__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 112rpx;
+  height: 112rpx;
+  color: var(--brand-color);
+  background-color: var(--brand-color-light);
+  border-radius: 50%;
+}
+
+.hero__title {
+  margin-top: 24rpx;
+  font-size: 40rpx;
+  font-weight: 600;
+}
+
+.hero__desc {
+  margin-top: 12rpx;
+  color: var(--text-color-secondary);
+  font-size: 26rpx;
+}
+
+.form {
+  overflow: hidden;
+  border-radius: var(--radius-card);
+}
+
+.send {
+  color: var(--brand-color);
+  font-size: 28rpx;
+  white-space: nowrap;
+}
+
+.send--disabled {
+  color: var(--text-color-placeholder);
+}
+
+.actions {
+  margin-top: 48rpx;
+}
+
+.tips {
+  margin-top: 32rpx;
+  color: var(--text-color-placeholder);
+  font-size: 24rpx;
+  line-height: 1.7;
+  text-align: center;
+}
+
+.tips__mock {
+  margin-top: 12rpx;
+  color: var(--discount-color);
+}

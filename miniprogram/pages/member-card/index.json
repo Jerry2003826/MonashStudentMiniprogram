@@ -1,0 +1,10 @@
+{
+  "usingComponents": {
+    "t-button": "tdesign-miniprogram/button/button",
+    "t-icon": "tdesign-miniprogram/icon/icon"
+  },
+  "navigationBarTitleText": "电子会员卡",
+  "navigationBarBackgroundColor": "#0b1f33",
+  "navigationBarTextStyle": "white",
+  "backgroundColor": "#0b1f33"
+}

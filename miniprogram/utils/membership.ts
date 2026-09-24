@@ -39,6 +39,67 @@ export function profileMemberStatus(me: Me | null): MemberStatus {
   }
 }
 
+export type CardVariant = 'active' | 'inactive' | 'empty'
+
+export interface MemberCardState {
+  variant: CardVariant
+  badge: string
+  hint: string
+  action: string
+  actionUrl: string
+}
+
+export function memberCardState(me: Me | null): MemberCardState {
+  const membership = me?.membership
+  const state = membership?.state ?? 'none'
+  switch (state) {
+    case 'none':
+      return {
+        variant: 'empty',
+        badge: '',
+        hint: '完成学生认证后，就能领取电子会员卡',
+        action: '去认证',
+        actionUrl: VERIFY_URL,
+      }
+    case 'active':
+      return membership?.renewable
+        ? {
+            variant: 'active',
+            badge: '有效',
+            hint: '会员快到期了，续期只需要重新验证一次学生邮箱',
+            action: '去续期',
+            actionUrl: VERIFY_URL,
+          }
+        : {
+            variant: 'active',
+            badge: '有效',
+            hint: '请向商家出示此页面。时间实时跳动，截图无效。',
+            action: '',
+            actionUrl: '',
+          }
+    case 'expired':
+      return {
+        variant: 'inactive',
+        badge: '已过期',
+        hint: '重新验证学生邮箱即可续期',
+        action: '去续期',
+        actionUrl: VERIFY_URL,
+      }
+    case 'revoked':
+      return {
+        variant: 'inactive',
+        badge: '已取消',
+        hint: '会员资格已被取消，如有疑问请联系学生会',
+        action: '',
+        actionUrl: '',
+      }
+    default: {
+      const unreachable: never = state
+      return unreachable
+    }
+  }
+}
+
 export function memberEntry(me: Me | null): MemberEntry {
   const membership = me?.membership
   const state = membership?.state ?? 'none'

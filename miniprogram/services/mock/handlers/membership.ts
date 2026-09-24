@@ -1,3 +1,4 @@
+import { MOCK_VERIFICATION_CODE } from '../../../config'
 import type { Me } from '../../../types/api'
 import { isStudentEmail, normalizeEmail } from '../../../utils/validate'
 import { getDb } from '../db'
@@ -5,7 +6,6 @@ import { mockError, readString } from '../helpers'
 import type { MockRequest, MockRoute } from '../router'
 import { buildMe, DAY_MS, MEMBERSHIP_DAYS, RENEW_WINDOW_DAYS } from './me'
 
-export const MOCK_VERIFICATION_CODE = '123456'
 const MOCK_MEMBER_NO = '000123'
 const RESEND_COOLDOWN_MS = 60 * 1000
 const CODE_TTL_MS = 10 * 60 * 1000

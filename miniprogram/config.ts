@@ -10,6 +10,8 @@ const API_BASE_URLS: Record<EnvVersion, string> = {
 
 export const MOCK_DELAY_MS = 300
 
+export const MOCK_VERIFICATION_CODE = '123456'
+
 export function getEnvVersion(): EnvVersion {
   return wx.getAccountInfoSync().miniProgram.envVersion
 }

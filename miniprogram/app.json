@@ -6,7 +6,9 @@
     "pages/profile/index",
     "pages/merchant-detail/index",
     "pages/about/index",
-    "pages/agreement/index"
+    "pages/agreement/index",
+    "pages/verify/index",
+    "pages/member-card/index"
   ],
   "window": {
     "navigationBarTextStyle": "black",

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Me, MembershipInfo } from '../../../miniprogram/types/api'
 import {
   CARD_URL,
+  memberCardState,
   memberEntry,
   profileMemberStatus,
   VERIFY_URL,
@@ -103,6 +104,47 @@ describe('profileMemberStatus', () => {
     expect(profileMemberStatus(meWith({ state: 'revoked' }))).toMatchObject({
       text: '已取消',
       url: CARD_URL,
+    })
+  })
+})
+
+describe('memberCardState', () => {
+  it('未认证时不显示卡面，引导去认证', () => {
+    expect(memberCardState(meWith({ state: 'none' }))).toMatchObject({
+      variant: 'empty',
+      action: '去认证',
+      actionUrl: VERIFY_URL,
+    })
+  })
+
+  it('有效会员显示有效卡面，没有额外操作', () => {
+    expect(memberCardState(meWith({ state: 'active' }))).toMatchObject({
+      variant: 'active',
+      action: '',
+    })
+  })
+
+  it('快到期的有效会员仍显示有效卡面，但提供续期入口', () => {
+    expect(memberCardState(meWith({ state: 'active', renewable: true }))).toMatchObject({
+      variant: 'active',
+      action: '去续期',
+      actionUrl: VERIFY_URL,
+    })
+  })
+
+  it('已过期显示灰色卡面和续期入口', () => {
+    expect(memberCardState(meWith({ state: 'expired' }))).toMatchObject({
+      variant: 'inactive',
+      badge: '已过期',
+      action: '去续期',
+    })
+  })
+
+  it('已取消显示灰色卡面，不能自行续期', () => {
+    expect(memberCardState(meWith({ state: 'revoked' }))).toMatchObject({
+      variant: 'inactive',
+      badge: '已取消',
+      action: '',
     })
   })
 })

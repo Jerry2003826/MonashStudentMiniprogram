@@ -1,0 +1,54 @@
+<view class="page">
+  <view class="hero">
+    <view class="hero__icon">
+      <t-icon name="secured" size="56rpx" />
+    </view>
+    <view class="hero__title">{{renewing ? '续期会员' : '学生认证'}}</view>
+    <view class="hero__desc">验证 Monash 学生邮箱后免费成为会员，有效期 12 个月</view>
+  </view>
+
+  <view class="form">
+    <t-input
+      label="学生邮箱"
+      placeholder="abcd0001@student.monash.edu"
+      value="{{email}}"
+      clearable
+      bind:change="onEmailChange"
+      bind:clear="onEmailClear"
+    />
+    <t-input
+      label="验证码"
+      placeholder="6 位数字"
+      value="{{code}}"
+      type="number"
+      maxlength="{{6}}"
+      bind:change="onCodeChange"
+    >
+      <view
+        slot="suffix"
+        class="send {{countdown > 0 || sending ? 'send--disabled' : ''}}"
+        bind:tap="onSendCode"
+      >
+        {{countdown > 0 ? countdown + ' 秒后重发' : '发送验证码'}}
+      </view>
+    </t-input>
+  </view>
+
+  <view class="actions">
+    <t-button
+      theme="primary"
+      size="large"
+      block
+      loading="{{submitting}}"
+      disabled="{{!canSubmit}}"
+      bind:tap="onSubmit"
+    >
+      {{renewing ? '完成续期' : '完成认证'}}
+    </t-button>
+  </view>
+
+  <view class="tips">
+    <view>收不到验证码？请检查邮箱的垃圾邮件，或等 60 秒后重新发送。</view>
+    <view wx:if="{{mockMode}}" class="tips__mock">假数据模式：验证码固定为 {{mockCode}}</view>
+  </view>
+</view>
