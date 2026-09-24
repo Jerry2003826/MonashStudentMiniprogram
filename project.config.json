@@ -1,5 +1,7 @@
 {
   "compileType": "miniprogram",
+  "miniprogramRoot": "miniprogram/",
+  "srcMiniprogramRoot": "miniprogram/",
   "libVersion": "trial",
   "packOptions": {
     "ignore": [],
@@ -12,7 +14,12 @@
     "minified": true,
     "enhance": true,
     "showShadowRootInWxmlPanel": true,
-    "packNpmRelationList": [],
+    "packNpmRelationList": [
+      {
+        "packageJsonPath": "./package.json",
+        "miniprogramNpmDistDir": "./miniprogram/"
+      }
+    ],
     "babelSetting": {
       "ignore": [],
       "disablePlugins": [],
@@ -20,14 +27,14 @@
     },
     "uglifyFileName": false,
     "uploadWithSourceMap": true,
-    "packNpmManually": false,
+    "packNpmManually": true,
     "minifyWXSS": true,
     "localPlugins": false,
     "condition": false,
     "compileWorklet": false,
     "disableUseStrict": false,
     "minifyWXML": true,
-    "useCompilerPlugins": false
+    "useCompilerPlugins": ["typescript"]
   },
   "condition": {},
   "editorSetting": {

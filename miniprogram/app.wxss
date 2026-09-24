@@ -1,0 +1,26 @@
+page {
+  /* 学生会的视觉规范到位前，品牌色先用蓝色系占位 */
+  --brand-color: #006dae;
+  --brand-color-light: #e6f1f8;
+  --brand-color-focus: #cce2ef;
+  --brand-color-disabled: #80b6d6;
+  --brand-color-active: #005a8f;
+
+  --bg-color-page: #f5f6f8;
+  --bg-color-card: #ffffff;
+  --text-color-primary: rgba(0, 0, 0, 0.9);
+  --text-color-secondary: rgba(0, 0, 0, 0.6);
+  --text-color-placeholder: rgba(0, 0, 0, 0.4);
+  --radius-card: 16rpx;
+  --spacing-page: 32rpx;
+
+  --td-brand-color: var(--brand-color);
+  --td-brand-color-light: var(--brand-color-light);
+  --td-brand-color-focus: var(--brand-color-focus);
+  --td-brand-color-disabled: var(--brand-color-disabled);
+  --td-brand-color-active: var(--brand-color-active);
+
+  background-color: var(--bg-color-page);
+  color: var(--text-color-primary);
+  font-size: 28rpx;
+}
