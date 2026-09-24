@@ -1,0 +1,4 @@
+.page {
+  padding: var(--spacing-page);
+  color: var(--text-color-secondary);
+}

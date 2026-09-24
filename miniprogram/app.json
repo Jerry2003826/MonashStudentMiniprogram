@@ -1,10 +1,24 @@
 {
-  "pages": ["pages/home/index"],
+  "pages": [
+    "pages/home/index",
+    "pages/merchants/index",
+    "pages/forum/index",
+    "pages/profile/index"
+  ],
   "window": {
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "蒙纳士中国学生会",
     "navigationBarBackgroundColor": "#ffffff",
     "backgroundColor": "#f5f6f8"
+  },
+  "tabBar": {
+    "custom": true,
+    "list": [
+      { "pagePath": "pages/home/index", "text": "首页" },
+      { "pagePath": "pages/merchants/index", "text": "商家" },
+      { "pagePath": "pages/forum/index", "text": "论坛" },
+      { "pagePath": "pages/profile/index", "text": "我的" }
+    ]
   },
   "componentFramework": "glass-easel",
   "sitemapLocation": "sitemap.json",

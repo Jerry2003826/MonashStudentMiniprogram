@@ -2,6 +2,6 @@ import { syncTabBar } from '../../utils/tab-bar'
 
 Page({
   onShow() {
-    syncTabBar(this, 'home')
+    syncTabBar(this, 'merchants')
   },
 })

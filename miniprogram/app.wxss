@@ -1,3 +1,5 @@
+@import './styles/icon-font.wxss';
+
 page {
   /* 学生会的视觉规范到位前，品牌色先用蓝色系占位 */
   --brand-color: #006dae;
