@@ -1,0 +1,10 @@
+{
+  "usingComponents": {
+    "t-empty": "tdesign-miniprogram/empty/empty",
+    "t-button": "tdesign-miniprogram/button/button",
+    "t-loading": "tdesign-miniprogram/loading/loading",
+    "post-card": "/components/post-card/index"
+  },
+  "navigationBarTitleText": "我的帖子",
+  "enablePullDownRefresh": true
+}

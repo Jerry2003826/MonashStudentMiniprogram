@@ -9,7 +9,9 @@
     "pages/agreement/index",
     "pages/verify/index",
     "pages/member-card/index",
-    "pages/post-create/index"
+    "pages/post-create/index",
+    "pages/post-detail/index",
+    "pages/my-posts/index"
   ],
   "window": {
     "navigationBarTextStyle": "black",

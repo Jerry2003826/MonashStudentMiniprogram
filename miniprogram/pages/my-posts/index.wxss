@@ -1,0 +1,26 @@
+.page {
+  padding: 24rpx var(--spacing-page) 48rpx;
+}
+
+.post-item {
+  display: block;
+  margin-bottom: 20rpx;
+}
+
+.empty {
+  padding-top: 120rpx;
+}
+
+.empty__action {
+  display: flex;
+  justify-content: center;
+  margin-top: 32rpx;
+}
+
+.footer {
+  display: flex;
+  justify-content: center;
+  padding: 24rpx 0;
+  color: var(--text-color-placeholder);
+  font-size: 24rpx;
+}
