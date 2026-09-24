@@ -51,16 +51,20 @@ flowchart LR
 .
 ├── miniprogram/              # 小程序源码，对应 project.config.json 里的 miniprogramRoot
 │   ├── app.ts、app.json、app.wxss
-│   ├── config.ts             # 接口地址、是否使用假数据
+│   ├── config.ts             # 运行环境、接口地址、是否使用假数据
+│   ├── custom-tab-bar/       # 底部标签栏，基于 TDesign 的 t-tab-bar
 │   ├── pages/                # 每个页面一个目录，见 4.1 节
-│   ├── components/           # 公共组件：商家卡片、帖子卡片、空状态等
+│   ├── components/           # 公共组件：商家卡片、帖子卡片
 │   ├── services/
 │   │   ├── request.ts        # 请求封装
 │   │   ├── auth.ts           # 静默登录、token 读写、当前用户状态
 │   │   ├── api/              # 按模块划分的接口函数
 │   │   └── mock/             # 假接口和假数据
+│   ├── styles/               # icon-font.wxss：裁剪后内嵌的图标字体，由脚本生成
 │   ├── types/                # 接口类型，见 4.3 节
-│   └── utils/
+│   └── utils/                # 格式化、校验、会员状态文案等纯函数
+├── tests/miniprogram/        # 前端单元测试（Vitest），目录结构和 miniprogram/ 对应
+├── scripts/                  # build-icon-font.mjs：生成内嵌图标字体
 ├── server/
 │   ├── pyproject.toml        # Python 依赖，用 uv 管理
 │   ├── manage.py
@@ -68,13 +72,14 @@ flowchart LR
 │   ├── apps/                 # 各 Django 应用，见 5.1 节
 │   └── tests/
 ├── deploy/                   # docker-compose.yml、Caddyfile、.env.example、发布和备份脚本
-├── docs/                     # 需求文档、技术方案、贡献指南、测试清单
+├── docs/                     # 需求文档、技术方案、贡献指南、测试清单、实施计划
 ├── .github/workflows/        # CI
-├── package.json              # TDesign 依赖和前端工具链（TypeScript、ESLint、Prettier、openapi-typescript）
+├── package.json              # TDesign 依赖和前端工具链（TypeScript、ESLint、Prettier、Vitest；第 1 期加 openapi-typescript）
+├── tsconfig.json、eslint.config.mjs、vitest.config.ts、.prettierrc
 └── project.config.json
 ```
 
-第 0 期会把现在根目录下的模板代码挪进 `miniprogram/`，并在 `project.config.json` 里设置 `miniprogramRoot`。TDesign 通过根目录的 `package.json` 安装，在开发者工具里「构建 npm」时输出到 `miniprogram/miniprogram_npm/`。
+`project.config.json` 里的 `miniprogramRoot` 指向 `miniprogram/`。TDesign 通过根目录的 `package.json` 安装，在开发者工具里「构建 npm」时输出到 `miniprogram/miniprogram_npm/`，这个目录不提交到 git。
 
 ## 4. 小程序前端
 
@@ -105,9 +110,9 @@ flowchart LR
 - 带上 `Authorization: Bearer <token>`；
 - 收到 `UNAUTHORIZED` 时自动重新静默登录，并重试一次；
 - 把失败的响应统一转换成 `ApiError`（包含 `code` 和 `message`）；
-- 当 `config.ts` 里的 `USE_MOCK` 为 `true` 时，不发网络请求，而是交给 `services/mock/` 里对应的假接口处理，并模拟 300 毫秒左右的延迟。
+- 当 `config.ts` 的 `isMockEnabled()` 返回 `true` 时，不发网络请求，而是交给 `services/mock/` 里对应的假接口处理，并模拟 300 毫秒左右的延迟。
 
-假数据和真接口使用同一套类型，字段写错时 TypeScript 会直接报错。`USE_MOCK` 只在开发版里生效，体验版和正式版一律走真接口。
+假数据和真接口使用同一套类型，字段写错时 TypeScript 会直接报错。`isMockEnabled()` 只有在 `MOCK_IN_DEVELOP` 为 `true` 且运行在开发版时才返回 `true`，体验版和正式版一律走真接口；第 1 期联调时把 `MOCK_IN_DEVELOP` 改成 `false` 即可。
 
 ### 4.3 接口类型
 
@@ -124,10 +129,13 @@ flowchart LR
 
 - 页面目录用小写字母加连字符命名，比如 `merchant-detail`。
 - 品牌色、字号和间距统一定义在 `app.wxss` 的 CSS 变量里，并覆盖 TDesign 的主题变量。拿到学生会的视觉规范后，只需要改这一个地方。
-- 用户选图用 `wx.chooseMedia`，并开启压缩。
-- 不引入状态管理库。页面在 `onShow` 里重新拉取数据；登录状态和会员状态统一从 `services/auth.ts` 读取。
+- 用户选图用 TDesign 的 `t-upload`（内部调用 `wx.chooseMedia`），并开启压缩。
+- 不引入状态管理库。登录状态和会员状态统一从 `services/auth.ts` 读取；发帖、删帖、点赞、评论后用 `utils/refresh.ts` 标记相关列表，列表页在 `onShow` 里发现标记才刷新，避免每次切回来都重新加载、丢掉滚动位置。
+- 发帖、评论、点赞、举报前调用 `utils/guard.ts` 的 `ensureMember()`，不是有效会员时弹窗引导去认证。
 - 头像昵称用 `<button open-type="chooseAvatar">` 和 `<input type="nickname">`。
 - 地图导航用 `wx.openLocation`。澳洲境内的 GCJ-02 坐标和 WGS-84 坐标一致，干事可以直接从 Google Maps 复制经纬度。
+- 底部标签栏用 TDesign 的 `t-tab-bar` 自定义实现（`custom-tab-bar/`），每个标签页在 `onShow` 里调用 `syncTabBar()` 同步选中项。
+- 图标：TDesign 默认从腾讯 CDN 在线加载整套图标字体，从澳洲访问时快时慢（实测最慢一次要 76 秒），开发者工具里也经常显示不出来。所以用 `scripts/build-icon-font.mjs` 把字体裁剪成用到的图标，以 base64 内嵌到 `styles/icon-font.wxss`，由 `app.wxss` 引入。新增图标的方法见[贡献指南](./contributing.md)。
 
 ## 5. 后端
 
@@ -189,7 +197,7 @@ flowchart LR
 | GET | `/health` | 健康检查 | 无 |
 | POST | `/auth/wechat-login` | 用 `wx.login` 拿到的 code 换 token | 无 |
 | GET | `/me` | 当前用户信息和会员状态（会员卡页也用这个接口） | 登录 |
-| PATCH | `/me` | 修改昵称 | 登录 |
+| PUT | `/me` | 修改昵称（`wx.request` 不支持 PATCH，所以用 PUT） | 登录 |
 | POST | `/me/avatar` | 上传头像 | 登录 |
 | DELETE | `/me` | 注销账号 | 登录 |
 | POST | `/membership/email-code` | 发送验证码 | 登录 |
@@ -366,10 +374,10 @@ sequenceDiagram
 - **分支**：`main` 始终保持可发布。每个任务从 `main` 拉一个分支，命名为 `feat/<简短描述>` 或 `fix/<简短描述>`；做完提 PR，CI 通过并由技术负责人 review 后，用 squash 方式合并。
 - **CI**（GitHub Actions）：
   - 后端：`uv sync`、`ruff check`、`ruff format --check`、`pytest`（用 PostgreSQL 服务容器）；
-  - 前端：`npm ci`、`tsc --noEmit`、`eslint`。
+  - 前端：`npm ci`、类型检查、ESLint、Prettier 格式检查、Vitest 单元测试（第 0 期已配置好，见 `.github/workflows/ci.yml`）。
 - **代码规范**：Python 用 Ruff 检查并写类型注解；TypeScript 开启 `strict`；格式统一交给 Ruff 和 Prettier 自动处理，不在 review 里争论格式。
 - **小程序后台权限**：技术负责人是管理员；组员要加为「开发者」才能预览和上传代码；只有技术负责人能提交审核和发布。
-- **贡献指南**：第 0 期在 `docs/contributing.md` 写清楚怎么装环境、怎么建分支、怎么提 PR。
+- **贡献指南**：[docs/contributing.md](./contributing.md) 写清楚了怎么装环境、怎么建分支、怎么提 PR，以及常见问题。
 
 ## 8. 测试
 
@@ -381,7 +389,7 @@ sequenceDiagram
 - 论坛权限：访客、过期会员和禁言用户不能发帖；只有作者能删除；`staff_only` 板块只有干事能发帖。
 - 内容安全：`risky` 被拦截；`review` 和接口调用失败会生成系统举报；图片回调能更新状态；违规图片会让帖子隐藏。
 
-**前端**：靠 `tsc` 和 ESLint 把关；另外在 `docs/test-checklist.md` 里维护每个页面的手动测试清单，合并前在开发者工具里过一遍，发体验版前在 iOS 和 Android 真机上各过一遍。
+**前端**：`services/` 和 `utils/` 里的纯逻辑（请求封装、假接口的业务规则、格式化、会员状态文案）用 Vitest 写单元测试，放在 `tests/miniprogram/`。页面靠 `tsc`、ESLint 和[手动测试清单](./test-checklist.md)把关：合并前在开发者工具里过一遍，发体验版前在 iOS 和 Android 真机上各过一遍。
 
 **不做**：小程序自动化界面测试（miniprogram-automator），投入产出比太低。
 
@@ -391,17 +399,16 @@ sequenceDiagram
 
 **第 0 期：工程底座和假数据原型**
 
+工程底座和全部 12 个页面的可点击原型已由技术负责人完成，方便先拿去演示、对齐需求。组员在第 0 期的任务是把原型打磨成可上线的质量：
+
 | 任务 | 负责人 | 内容 |
 | --- | --- | --- |
-| 工程底座 | 技术负责人 | 目录结构、TypeScript 配置、TDesign、请求封装和假数据机制、`types/api.ts`、底部标签栏、CI、贡献指南 |
-| 首页 | 组员 | 轮播图、会员卡入口、精选商家 |
-| 商家列表 | 组员 | 分类和区域筛选、搜索、上拉加载更多 |
-| 商家详情 | 组员 | 图片、拨号、地图导航、复制地址 |
-| 我的、关于我们、协议页 | 组员 | 头像昵称填写、会员状态展示、静态页面 |
-| 学生认证和会员卡 | 组员（稍难） | 邮箱和验证码表单、发送倒计时、会员卡动画和走秒时钟 |
-| 论坛首页 | 组员 | 板块切换、帖子列表、下拉刷新 |
-| 帖子详情和评论 | 组员 | 评论列表、回复 @某人、点赞、举报弹窗 |
-| 发帖 | 组员 | 选择板块、字数限制、选图和预览 |
+| 首页、商家列表、商家详情打磨 | 组员 | 加载骨架屏、接口出错时的重试提示、空状态、图片加载失败的占位、真机适配 |
+| 我的、关于我们、协议页打磨 | 组员 | 头像上传中的状态、昵称修改的交互细节、学生会提供正式文案后替换示例文字 |
+| 学生认证和会员卡打磨 | 组员 | 表单报错提示、倒计时和按钮状态的细节、会员卡动画在真机上的流畅度 |
+| 论坛首页和发帖打磨 | 组员 | 列表加载和空状态、发帖草稿保存、图片上传失败后的重试 |
+| 帖子详情和评论打磨 | 组员 | 评论输入框和键盘的配合、长按菜单、删除和举报后的反馈 |
+| 测试清单维护 | 组员 | 按页面实际表现补充 [docs/test-checklist.md](./test-checklist.md)，并在 iOS 和 Android 真机上各跑一遍 |
 
 **第 1 期：后端和联调**
 
