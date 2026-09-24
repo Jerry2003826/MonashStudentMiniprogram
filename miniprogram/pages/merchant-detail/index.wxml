@@ -1,0 +1,67 @@
+<view wx:if="{{merchant}}" class="page">
+  <swiper
+    class="gallery"
+    circular
+    indicator-dots
+    indicator-color="rgba(255, 255, 255, 0.5)"
+    indicator-active-color="#ffffff"
+  >
+    <swiper-item
+      wx:for="{{merchant.image_urls}}"
+      wx:key="*this"
+      data-index="{{index}}"
+      bind:tap="onPreviewImage"
+    >
+      <image class="gallery__image" src="{{item}}" mode="aspectFill" />
+    </swiper-item>
+  </swiper>
+
+  <view class="card">
+    <view class="name">{{merchant.name}}</view>
+    <view class="tags">
+      <t-tag size="small" variant="light" theme="primary">{{merchant.category.name}}</t-tag>
+      <t-tag size="small" variant="light">{{merchant.area.name}}</t-tag>
+    </view>
+    <view class="intro">{{merchant.intro}}</view>
+  </view>
+
+  <view class="card discount">
+    <view class="discount__title">
+      <t-icon name="discount" size="40rpx" />
+      <text>{{merchant.discount_summary}}</text>
+    </view>
+    <view class="discount__terms">使用条件：{{merchant.discount_terms}}</view>
+    <view class="discount__how">到店出示电子会员卡即可享受</view>
+  </view>
+
+  <t-cell-group theme="card" class="info">
+    <t-cell title="营业时间" description="{{merchant.opening_hours}}" left-icon="time" />
+    <t-cell
+      title="电话"
+      description="{{merchant.phone}}"
+      left-icon="call"
+      arrow
+      hover
+      bind:click="onCall"
+    />
+    <t-cell
+      title="地址"
+      description="{{merchant.address}}"
+      left-icon="location"
+      hover
+      bind:click="onOpenMap"
+    >
+      <view slot="note" class="copy" catch:tap="onCopyAddress">复制</view>
+    </t-cell>
+  </t-cell-group>
+
+  <view class="action-bar">
+    <t-button theme="primary" size="large" block bind:tap="onShowCard">{{actionText}}</t-button>
+  </view>
+</view>
+
+<t-empty wx:elif="{{errorMessage}}" class="state" icon="info-circle" description="{{errorMessage}}" />
+
+<view wx:else class="state">
+  <t-loading theme="circular" size="48rpx" />
+</view>

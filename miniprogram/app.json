@@ -3,7 +3,8 @@
     "pages/home/index",
     "pages/merchants/index",
     "pages/forum/index",
-    "pages/profile/index"
+    "pages/profile/index",
+    "pages/merchant-detail/index"
   ],
   "window": {
     "navigationBarTextStyle": "black",

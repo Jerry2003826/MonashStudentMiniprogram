@@ -1,1 +1,32 @@
-<view class="page">商家（页面开发中）</view>
+<view class="toolbar">
+  <view class="search">
+    <t-search
+      value="{{keyword}}"
+      shape="round"
+      placeholder="搜索商家名称"
+      bind:submit="onSearch"
+      bind:clear="onClearSearch"
+    />
+  </view>
+  <t-dropdown-menu>
+    <t-dropdown-item
+      options="{{categoryOptions}}"
+      value="{{category}}"
+      bind:change="onCategoryChange"
+    />
+    <t-dropdown-item options="{{areaOptions}}" value="{{area}}" bind:change="onAreaChange" />
+  </t-dropdown-menu>
+</view>
+
+<view class="list">
+  <merchant-card wx:for="{{items}}" wx:key="id" class="merchant-item" merchant="{{item}}" />
+  <t-empty
+    wx:if="{{loaded && !items.length}}"
+    icon="search"
+    description="没有找到符合条件的商家"
+  />
+  <view wx:if="{{loading}}" class="footer">
+    <t-loading theme="circular" size="40rpx" text="加载中" />
+  </view>
+  <view wx:elif="{{loaded && items.length && !hasMore}}" class="footer">没有更多商家了</view>
+</view>

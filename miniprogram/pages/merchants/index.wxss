@@ -1,4 +1,27 @@
-.page {
-  padding: var(--spacing-page);
-  color: var(--text-color-secondary);
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: var(--bg-color-card);
+}
+
+.search {
+  padding: 16rpx var(--spacing-page) 8rpx;
+}
+
+.list {
+  padding: 24rpx var(--spacing-page) 48rpx;
+}
+
+.merchant-item {
+  display: block;
+  margin-bottom: 20rpx;
+}
+
+.footer {
+  display: flex;
+  justify-content: center;
+  padding: 24rpx 0;
+  color: var(--text-color-placeholder);
+  font-size: 24rpx;
 }
