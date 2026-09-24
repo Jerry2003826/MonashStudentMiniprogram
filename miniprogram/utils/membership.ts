@@ -11,6 +11,34 @@ export interface MemberEntry {
   url: string
 }
 
+export interface MemberStatus {
+  text: string
+  url: string
+  highlight: boolean
+}
+
+export function profileMemberStatus(me: Me | null): MemberStatus {
+  const membership = me?.membership
+  const state = membership?.state ?? 'none'
+  const expiry = membership?.expires_at ? formatDate(membership.expires_at) : ''
+  switch (state) {
+    case 'none':
+      return { text: '未认证，去认证', url: VERIFY_URL, highlight: true }
+    case 'active':
+      return membership?.renewable
+        ? { text: `${expiry} 到期，去续期`, url: VERIFY_URL, highlight: true }
+        : { text: `有效期至 ${expiry}`, url: CARD_URL, highlight: false }
+    case 'expired':
+      return { text: '已过期，去续期', url: VERIFY_URL, highlight: true }
+    case 'revoked':
+      return { text: '已取消', url: CARD_URL, highlight: false }
+    default: {
+      const unreachable: never = state
+      return unreachable
+    }
+  }
+}
+
 export function memberEntry(me: Me | null): MemberEntry {
   const membership = me?.membership
   const state = membership?.state ?? 'none'

@@ -1,1 +1,74 @@
-<view class="page">我的（页面开发中）</view>
+<view class="page">
+  <view class="profile-card">
+    <button class="avatar-button" open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar">
+      <image wx:if="{{avatarUrl}}" class="avatar" src="{{avatarUrl}}" mode="aspectFill" />
+      <view wx:else class="avatar avatar--placeholder">
+        <t-icon name="user" size="56rpx" />
+      </view>
+      <view class="avatar-badge">
+        <t-icon name="edit" size="22rpx" />
+      </view>
+    </button>
+    <view class="profile-info">
+      <input
+        class="nickname"
+        type="nickname"
+        value="{{nickname}}"
+        placeholder="点击设置昵称"
+        maxlength="20"
+        bindblur="onNicknameBlur"
+        bindconfirm="onNicknameBlur"
+      />
+      <view class="profile-hint">点击头像或昵称即可修改</view>
+    </view>
+  </view>
+
+  <view class="group">
+    <t-cell-group theme="card">
+      <t-cell
+        title="会员状态"
+        left-icon="card"
+        note="{{status.text}}"
+        t-class-note="{{status.highlight ? 'note--highlight' : ''}}"
+        arrow
+        hover
+        bind:click="onStatusTap"
+      />
+      <t-cell title="我的帖子" left-icon="chat" arrow hover bind:click="onMyPosts" />
+    </t-cell-group>
+  </view>
+
+  <view class="group">
+    <t-cell-group theme="card">
+      <t-cell title="关于我们" left-icon="info-circle" arrow hover bind:click="onAbout" />
+      <t-cell
+        title="用户协议"
+        left-icon="file"
+        arrow
+        hover
+        data-type="terms"
+        bind:click="onAgreement"
+      />
+      <t-cell
+        title="隐私政策"
+        left-icon="lock-on"
+        arrow
+        hover
+        data-type="privacy"
+        bind:click="onAgreement"
+      />
+    </t-cell-group>
+  </view>
+
+  <view class="group">
+    <t-cell-group theme="card">
+      <t-cell
+        title="注销账号"
+        left-icon="logout"
+        t-class-title="danger"
+        hover
+        bind:click="onDeleteAccount"
+      />
+    </t-cell-group>
+  </view>
+</view>

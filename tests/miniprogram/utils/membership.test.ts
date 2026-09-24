@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { Me, MembershipInfo } from '../../../miniprogram/types/api'
-import { CARD_URL, memberEntry, VERIFY_URL } from '../../../miniprogram/utils/membership'
+import {
+  CARD_URL,
+  memberEntry,
+  profileMemberStatus,
+  VERIFY_URL,
+} from '../../../miniprogram/utils/membership'
 
 function meWith(membership: Partial<MembershipInfo>): Me {
   return {
@@ -61,5 +66,43 @@ describe('memberEntry', () => {
 
   it('已被取消时入口是会员卡页，由会员卡页说明原因', () => {
     expect(memberEntry(meWith({ state: 'revoked' })).url).toBe(CARD_URL)
+  })
+})
+
+describe('profileMemberStatus', () => {
+  it('未认证时提示去认证', () => {
+    expect(profileMemberStatus(meWith({ state: 'none' }))).toEqual({
+      text: '未认证，去认证',
+      url: VERIFY_URL,
+      highlight: true,
+    })
+  })
+
+  it('有效会员显示有效期，点击进入会员卡', () => {
+    expect(
+      profileMemberStatus(meWith({ state: 'active', expires_at: '2027-09-24T12:00:00+10:00' })),
+    ).toEqual({ text: '有效期至 2027-09-24', url: CARD_URL, highlight: false })
+  })
+
+  it('快到期时提示续期', () => {
+    expect(
+      profileMemberStatus(
+        meWith({ state: 'active', expires_at: '2026-10-10T12:00:00+10:00', renewable: true }),
+      ),
+    ).toEqual({ text: '2026-10-10 到期，去续期', url: VERIFY_URL, highlight: true })
+  })
+
+  it('已过期时提示续期', () => {
+    expect(profileMemberStatus(meWith({ state: 'expired' }))).toMatchObject({
+      url: VERIFY_URL,
+      highlight: true,
+    })
+  })
+
+  it('已取消时点击进入会员卡页查看原因', () => {
+    expect(profileMemberStatus(meWith({ state: 'revoked' }))).toMatchObject({
+      text: '已取消',
+      url: CARD_URL,
+    })
   })
 })

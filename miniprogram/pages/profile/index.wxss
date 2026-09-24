@@ -1,4 +1,86 @@
 .page {
-  padding: var(--spacing-page);
-  color: var(--text-color-secondary);
+  padding: 24rpx 0 48rpx;
+}
+
+.profile-card {
+  display: flex;
+  align-items: center;
+  margin: 0 var(--spacing-page);
+  padding: 40rpx 32rpx;
+  background-color: var(--bg-color-card);
+  border-radius: var(--radius-card);
+}
+
+.avatar-button {
+  position: relative;
+  flex-shrink: 0;
+  width: 128rpx;
+  height: 128rpx;
+  margin: 0 32rpx 0 0;
+  padding: 0;
+  background: none;
+  border-radius: 50%;
+}
+
+.avatar-button::after {
+  border: none;
+}
+
+.avatar {
+  width: 128rpx;
+  height: 128rpx;
+  border-radius: 50%;
+}
+
+.avatar--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand-color);
+  background-color: var(--brand-color-light);
+}
+
+.avatar-badge {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40rpx;
+  height: 40rpx;
+  color: #ffffff;
+  background-color: var(--brand-color);
+  border: 4rpx solid #ffffff;
+  border-radius: 50%;
+}
+
+.profile-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.nickname {
+  height: 56rpx;
+  font-size: 36rpx;
+  font-weight: 600;
+}
+
+.profile-hint {
+  margin-top: 8rpx;
+  color: var(--text-color-placeholder);
+  font-size: 24rpx;
+}
+
+.group {
+  display: block;
+  margin-top: 24rpx;
+}
+
+.note--highlight {
+  color: var(--brand-color) !important;
+}
+
+.danger {
+  color: #d54941 !important;
 }

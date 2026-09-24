@@ -1,0 +1,9 @@
+<view class="page">
+  <view class="notice">示例文字，正式内容由学生会提供</view>
+  <view class="card">
+    <view wx:for="{{agreement.sections}}" wx:key="heading" class="section">
+      <view class="section__heading">{{item.heading}}</view>
+      <text class="section__body">{{item.body}}</text>
+    </view>
+  </view>
+</view>

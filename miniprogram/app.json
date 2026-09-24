@@ -4,7 +4,9 @@
     "pages/merchants/index",
     "pages/forum/index",
     "pages/profile/index",
-    "pages/merchant-detail/index"
+    "pages/merchant-detail/index",
+    "pages/about/index",
+    "pages/agreement/index"
   ],
   "window": {
     "navigationBarTextStyle": "black",

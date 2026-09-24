@@ -34,26 +34,28 @@
     <view class="discount__how">到店出示电子会员卡即可享受</view>
   </view>
 
-  <t-cell-group theme="card" class="info">
-    <t-cell title="营业时间" description="{{merchant.opening_hours}}" left-icon="time" />
-    <t-cell
-      title="电话"
-      description="{{merchant.phone}}"
-      left-icon="call"
-      arrow
-      hover
-      bind:click="onCall"
-    />
-    <t-cell
-      title="地址"
-      description="{{merchant.address}}"
-      left-icon="location"
-      hover
-      bind:click="onOpenMap"
-    >
-      <view slot="note" class="copy" catch:tap="onCopyAddress">复制</view>
-    </t-cell>
-  </t-cell-group>
+  <view class="info">
+    <t-cell-group theme="card">
+      <t-cell title="营业时间" description="{{merchant.opening_hours}}" left-icon="time" />
+      <t-cell
+        title="电话"
+        description="{{merchant.phone}}"
+        left-icon="call"
+        arrow
+        hover
+        bind:click="onCall"
+      />
+      <t-cell
+        title="地址"
+        description="{{merchant.address}}"
+        left-icon="location"
+        hover
+        bind:click="onOpenMap"
+      >
+        <view slot="note" class="copy" catch:tap="onCopyAddress">复制</view>
+      </t-cell>
+    </t-cell-group>
+  </view>
 
   <view class="action-bar">
     <t-button theme="primary" size="large" block bind:tap="onShowCard">{{actionText}}</t-button>
