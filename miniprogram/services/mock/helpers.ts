@@ -1,4 +1,4 @@
-import type { ApiErrorCode } from '../../types/api'
+import type { ApiErrorCode, Paginated } from '../../types/api'
 import { ApiError, defaultMessage } from '../errors'
 
 export const RISKY_WORD = '违规'
@@ -62,4 +62,34 @@ export function readNumberArray(body: unknown, key: string): number[] {
   return Array.isArray(value)
     ? value.filter((item): item is number => typeof item === 'number')
     : []
+}
+
+export function queryNumber(query: Record<string, string>, key: string): number | undefined {
+  const value = query[key]
+  if (value === undefined || value === '') return undefined
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : undefined
+}
+
+export function paramNumber(params: Record<string, string>, key: string): number {
+  const parsed = Number(params[key])
+  if (!Number.isInteger(parsed)) throw mockError('NOT_FOUND')
+  return parsed
+}
+
+export function includesText(text: string, keyword: string): boolean {
+  return text.toLowerCase().includes(keyword.trim().toLowerCase())
+}
+
+export function paginate<T>(
+  items: T[],
+  cursor: string | undefined,
+  pageSize: number,
+): Paginated<T> {
+  const offset = cursor ? Number(cursor) || 0 : 0
+  const next = offset + pageSize
+  return {
+    items: items.slice(offset, next),
+    next_cursor: next < items.length ? String(next) : null,
+  }
 }

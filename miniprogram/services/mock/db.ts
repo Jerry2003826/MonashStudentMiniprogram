@@ -1,3 +1,13 @@
+import type {
+  Area,
+  Banner,
+  Board,
+  Category,
+  CreateReportBody,
+  ImageCheckStatus,
+} from '../../types/api'
+import { createSeed } from './seed'
+
 export interface MockUser {
   id: number
   nickname: string
@@ -18,27 +28,99 @@ export interface MockEmailCode {
   used: boolean
 }
 
+export interface MockMerchant {
+  id: number
+  name: string
+  logo_url: string
+  category_id: number
+  area_id: number
+  discount_summary: string
+  discount_terms: string
+  intro: string
+  image_urls: string[]
+  address: string
+  latitude: number
+  longitude: number
+  phone: string
+  opening_hours: string
+  is_featured: boolean
+  is_active: boolean
+}
+
+export interface MockImage {
+  id: number
+  url: string
+  uploader_id: number
+  check_status: ImageCheckStatus
+}
+
+export interface MockPost {
+  id: number
+  board_id: number
+  author_id: number
+  title: string
+  content: string
+  image_ids: number[]
+  like_count: number
+  is_pinned: boolean
+  created_at: string
+  deleted: boolean
+}
+
+export interface MockComment {
+  id: number
+  post_id: number
+  author_id: number
+  reply_to_user_id: number | null
+  content: string
+  created_at: string
+  deleted: boolean
+}
+
 export interface MockDb {
   meId: number
   users: MockUser[]
   membership: MockMembership | null
   emailCodes: Record<string, MockEmailCode>
+  banners: Banner[]
+  categories: Category[]
+  areas: Area[]
+  merchants: MockMerchant[]
+  boards: Board[]
+  images: MockImage[]
+  posts: MockPost[]
+  comments: MockComment[]
+  likedPostIds: number[]
+  reports: CreateReportBody[]
   nextId: number
 }
 
 export const DEFAULT_NICKNAME = '微信用户'
 export const DELETED_NICKNAME = '已注销用户'
 
+const ME_ID = 1
+
 export function createUser(id: number): MockUser {
   return { id, nickname: DEFAULT_NICKNAME, avatar_url: null, banned_until: null, is_staff: false }
 }
 
 function createDb(): MockDb {
+  const seed = createSeed(Date.now())
   return {
-    meId: 1,
-    users: [createUser(1)],
+    meId: ME_ID,
+    users: [createUser(ME_ID), ...seed.users],
     membership: null,
     emailCodes: {},
+    banners: seed.banners,
+    categories: seed.categories,
+    areas: seed.areas,
+    merchants: seed.merchants,
+    boards: seed.boards,
+    images: seed.images,
+    posts: seed.posts,
+    comments: seed.comments,
+    likedPostIds: [],
+    reports: [],
     nextId: 1000,
   }
 }

@@ -36,6 +36,12 @@ export function membershipInfo(
   }
 }
 
+export function requireMember(db: MockDb): void {
+  if (membershipInfo(db.membership).state !== 'active') throw mockError('MEMBERSHIP_REQUIRED')
+  const bannedUntil = currentUser(db).banned_until
+  if (bannedUntil && Date.parse(bannedUntil) > Date.now()) throw mockError('USER_BANNED')
+}
+
 export function buildMe(db: MockDb): Me {
   const user = currentUser(db)
   return {
@@ -75,6 +81,7 @@ function deleteAccount(): null {
   db.meId = fresh.id
   db.membership = null
   db.emailCodes = {}
+  db.likedPostIds = []
   return null
 }
 
