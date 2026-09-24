@@ -1,0 +1,58 @@
+<view class="page">
+  <view class="section-title">选择板块</view>
+  <view class="boards">
+    <view
+      wx:for="{{boards}}"
+      wx:key="id"
+      class="board-chip {{item.id === boardId ? 'board-chip--active' : ''}}"
+      data-id="{{item.id}}"
+      bind:tap="onBoardTap"
+    >
+      {{item.name}}
+    </view>
+  </view>
+
+  <view class="editor">
+    <t-input
+      placeholder="标题（最多 50 字）"
+      value="{{title}}"
+      maxlength="{{50}}"
+      borderless
+      bind:change="onTitleChange"
+    />
+    <view class="divider" />
+    <t-textarea
+      placeholder="说点什么吧……"
+      value="{{content}}"
+      maxlength="{{5000}}"
+      indicator
+      autosize="{{ { minHeight: 240 } }}"
+      bind:change="onContentChange"
+    />
+    <view class="upload">
+      <t-upload
+        files="{{files}}"
+        max="{{9}}"
+        media-type="{{['image']}}"
+        config="{{ { sizeType: ['compressed'] } }}"
+        bind:add="onAddImages"
+        bind:remove="onRemoveImage"
+      />
+    </view>
+  </view>
+
+  <view class="rules">发布前内容会经过安全检测，请遵守论坛规则，不要发布广告和违规信息。</view>
+
+  <view class="action-bar">
+    <t-button
+      theme="primary"
+      size="large"
+      block
+      loading="{{submitting}}"
+      disabled="{{!canSubmit}}"
+      bind:tap="onSubmit"
+    >
+      发布
+    </t-button>
+  </view>
+</view>

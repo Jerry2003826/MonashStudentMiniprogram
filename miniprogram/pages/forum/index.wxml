@@ -1,1 +1,26 @@
-<view class="page">论坛（页面开发中）</view>
+<view class="toolbar">
+  <view class="search">
+    <t-search
+      value="{{keyword}}"
+      shape="round"
+      placeholder="搜索帖子标题和内容"
+      bind:submit="onSearch"
+      bind:clear="onClearSearch"
+    />
+  </view>
+  <t-tabs value="{{board}}" space-evenly="{{false}}" bind:change="onTabChange">
+    <t-tab-panel label="全部" value="{{0}}" />
+    <t-tab-panel wx:for="{{boards}}" wx:key="id" label="{{item.name}}" value="{{item.id}}" />
+  </t-tabs>
+</view>
+
+<view class="list">
+  <post-card wx:for="{{items}}" wx:key="id" class="post-item" post="{{item}}" />
+  <t-empty wx:if="{{loaded && !items.length}}" icon="chat" description="这里还没有帖子，来发第一条吧" />
+  <view wx:if="{{loading}}" class="footer">
+    <t-loading theme="circular" size="40rpx" text="加载中" />
+  </view>
+  <view wx:elif="{{loaded && items.length && !hasMore}}" class="footer">没有更多帖子了</view>
+</view>
+
+<t-fab icon="add" text="发帖" style="right: 32rpx; bottom: 48rpx;" bind:click="onCreatePost" />

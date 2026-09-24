@@ -1,0 +1,9 @@
+{
+  "usingComponents": {
+    "t-input": "tdesign-miniprogram/input/input",
+    "t-textarea": "tdesign-miniprogram/textarea/textarea",
+    "t-upload": "tdesign-miniprogram/upload/upload",
+    "t-button": "tdesign-miniprogram/button/button"
+  },
+  "navigationBarTitleText": "发帖"
+}

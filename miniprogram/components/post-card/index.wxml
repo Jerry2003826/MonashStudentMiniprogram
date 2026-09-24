@@ -1,0 +1,37 @@
+<view class="card" hover-class="card--pressed" bind:tap="onTap">
+  <view class="head">
+    <t-tag wx:if="{{post.is_pinned}}" size="small" theme="danger" variant="light">置顶</t-tag>
+    <t-tag size="small" variant="light" theme="primary">{{post.board.name}}</t-tag>
+  </view>
+  <view class="title">{{post.title}}</view>
+  <view class="excerpt">{{post.excerpt}}</view>
+  <view wx:if="{{post.thumbnail_urls.length}}" class="thumbs">
+    <image
+      wx:for="{{post.thumbnail_urls}}"
+      wx:key="*this"
+      class="thumb"
+      src="{{item}}"
+      mode="aspectFill"
+    />
+  </view>
+  <view class="foot">
+    <view class="author">
+      <image wx:if="{{post.author.avatar_url}}" class="avatar" src="{{post.author.avatar_url}}" />
+      <view wx:else class="avatar avatar--placeholder">
+        <t-icon name="user" size="24rpx" />
+      </view>
+      <text class="author__name">{{post.author.nickname}}</text>
+      <text class="author__time">{{timeText}}</text>
+    </view>
+    <view class="stats">
+      <view class="stat">
+        <t-icon name="thumb-up" size="30rpx" />
+        <text>{{post.like_count}}</text>
+      </view>
+      <view class="stat">
+        <t-icon name="chat" size="30rpx" />
+        <text>{{post.comment_count}}</text>
+      </view>
+    </view>
+  </view>
+</view>

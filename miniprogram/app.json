@@ -8,7 +8,8 @@
     "pages/about/index",
     "pages/agreement/index",
     "pages/verify/index",
-    "pages/member-card/index"
+    "pages/member-card/index",
+    "pages/post-create/index"
   ],
   "window": {
     "navigationBarTextStyle": "black",
