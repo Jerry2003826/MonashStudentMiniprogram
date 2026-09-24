@@ -8,6 +8,7 @@ page {
   --brand-color-disabled: #80b6d6;
   --brand-color-active: #005a8f;
 
+  --discount-color: #e37318;
   --bg-color-page: #f5f6f8;
   --bg-color-card: #ffffff;
   --text-color-primary: rgba(0, 0, 0, 0.9);

@@ -1,3 +1,51 @@
 <view class="page">
-  <t-button theme="primary" block>TDesign 已接入</t-button>
+  <swiper
+    wx:if="{{banners.length}}"
+    class="banner"
+    autoplay
+    circular
+    indicator-dots
+    indicator-color="rgba(255, 255, 255, 0.5)"
+    indicator-active-color="#ffffff"
+  >
+    <swiper-item
+      wx:for="{{banners}}"
+      wx:key="id"
+      class="banner__item"
+      data-index="{{index}}"
+      bind:tap="onBannerTap"
+    >
+      <image class="banner__image" src="{{item.image_url}}" mode="aspectFill" />
+      <view class="banner__title">{{item.title}}</view>
+    </swiper-item>
+  </swiper>
+
+  <view class="member-entry" hover-class="member-entry--pressed" bind:tap="onEntryTap">
+    <view class="member-entry__text">
+      <view class="member-entry__title">{{entry.title}}</view>
+      <view class="member-entry__desc">{{entry.description}}</view>
+    </view>
+    <view class="member-entry__action">
+      <text>{{entry.action}}</text>
+      <t-icon name="chevron-right" size="32rpx" />
+    </view>
+  </view>
+
+  <view class="section-header">
+    <text class="section-title">精选商家</text>
+    <view class="section-more" bind:tap="onMoreMerchants">
+      <text>全部商家</text>
+      <t-icon name="chevron-right" size="28rpx" />
+    </view>
+  </view>
+
+  <view wx:if="{{loading && !featured.length}}" class="loading">
+    <t-loading theme="circular" size="48rpx" />
+  </view>
+  <merchant-card
+    wx:for="{{featured}}"
+    wx:key="id"
+    class="merchant-item"
+    merchant="{{item}}"
+  />
 </view>

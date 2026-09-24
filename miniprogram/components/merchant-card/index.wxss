@@ -1,0 +1,50 @@
+.card {
+  display: flex;
+  align-items: center;
+  padding: 24rpx;
+  background-color: var(--bg-color-card);
+  border-radius: var(--radius-card);
+}
+
+.card--pressed {
+  opacity: 0.7;
+}
+
+.logo {
+  flex-shrink: 0;
+  margin-right: 24rpx;
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  margin-bottom: 12rpx;
+  overflow: hidden;
+  font-size: 32rpx;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.tags {
+  display: flex;
+  gap: 12rpx;
+  margin-bottom: 12rpx;
+}
+
+.discount {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  color: var(--discount-color);
+  font-size: 26rpx;
+}
+
+.discount__text {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

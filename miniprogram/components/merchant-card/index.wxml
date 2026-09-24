@@ -1,0 +1,21 @@
+<view class="card" hover-class="card--pressed" bind:tap="onTap">
+  <t-image
+    class="logo"
+    src="{{merchant.logo_url || ''}}"
+    mode="aspectFill"
+    shape="round"
+    width="120rpx"
+    height="120rpx"
+  />
+  <view class="info">
+    <view class="name">{{merchant.name}}</view>
+    <view class="tags">
+      <t-tag size="small" variant="light" theme="primary">{{merchant.category.name}}</t-tag>
+      <t-tag size="small" variant="light">{{merchant.area.name}}</t-tag>
+    </view>
+    <view class="discount">
+      <t-icon name="discount" size="32rpx" />
+      <text class="discount__text">{{merchant.discount_summary}}</text>
+    </view>
+  </view>
+</view>
