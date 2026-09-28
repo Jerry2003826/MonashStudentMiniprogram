@@ -1,6 +1,6 @@
 # 当前界面截图
 
-本目录的 `current-*.png` 于 **2026-09-28（Australia/Melbourne，AEST）**从运行中的应用截取，共 **11 张**。对应业务源码提交为 [`0d48ff0`](https://github.com/Jerry2003826/MonashStudentMiniprogram/commit/0d48ff0605b4a01a8033f539d790027f094b5847)，位于 `Jiarui/planning-alignment` 分支。此次 README 更新只修改文档和截图。
+本目录的 `current-*.png` 于 **2026-09-28（Australia/Melbourne，AEST）**从运行中的应用截取，共 **11 张**。对应业务源码提交为 [`0d48ff0`](https://github.com/Jerry2003826/MonashStudentMiniprogram/commit/0d48ff0605b4a01a8033f539d790027f094b5847)，采集时位于 `Jiarui/planning-alignment` 分支。此次 README 更新只修改文档和截图。
 
 ## 小程序：8 张开发演示截图
 

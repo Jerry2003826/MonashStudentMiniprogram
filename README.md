@@ -1,12 +1,12 @@
 # 蒙纳士中国学生会小程序
 
-[![CI](https://github.com/Jerry2003826/MonashStudentMiniprogram/actions/workflows/ci.yml/badge.svg?branch=Jiarui%2Fplanning-alignment)](https://github.com/Jerry2003826/MonashStudentMiniprogram/actions/workflows/ci.yml?query=branch%3AJiarui%2Fplanning-alignment)
+[![CI](https://github.com/Jerry2003826/MonashStudentMiniprogram/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Jerry2003826/MonashStudentMiniprogram/actions/workflows/ci.yml?query=branch%3Amain)
 
 面向 Monash University 中国同学的校园服务小程序：看活动、找优惠、读新生手册、参与文字交流，并通过人工审核申请电子会员卡。学生会干事在独立管理后台维护内容、审核会员与论坛、处理反馈。
 
 **当前版本：18 个页面 · 5 个底部栏目 · 会员与内容后台 · 可迁移 PostgreSQL。**
 
-> 更新于 **2026-09-28**。当前功能位于 `Jiarui/planning-alignment` 分支，尚未合并到 `main`。本地联调、生产容器和数据库迁移演练已完成；**尚未部署到公网，也没有可用的微信体验版二维码**。源码默认使用模拟数据，真实服务需要按部署手册配置。
+> 更新于 **2026-09-28**。本地联调、生产容器和数据库迁移演练已完成；**尚未部署到公网，也没有可用的微信体验版二维码**。源码默认使用模拟数据，真实服务需要按部署手册配置。
 
 [界面预览](#界面预览) · [功能与流程](#功能与流程) · [快速开始](#快速开始) · [部署与迁移](#部署与迁移) · [测试与验证](#测试与验证) · [文档导航](#文档导航)
 
@@ -101,7 +101,7 @@
 需要 **Node.js 24**（见 [`.nvmrc`](.nvmrc)）与[微信开发者工具](https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html)。
 
 ```sh
-git clone --branch Jiarui/planning-alignment https://github.com/Jerry2003826/MonashStudentMiniprogram.git
+git clone https://github.com/Jerry2003826/MonashStudentMiniprogram.git
 cd MonashStudentMiniprogram
 npm ci
 npm run prepare:components
