@@ -11,7 +11,7 @@ uv sync --locked
 cp -n .env.example .env
 ```
 
-需要本地演示账号时，在 `.env` 中明确设置 `ENABLE_DEV_LOGIN=true`，再运行：
+需要完整本地演示时，在 `.env` 中明确设置 `ENABLE_DEV_LOGIN=true` 和 `WECHAT_CONTENT_SAFETY_MODE=fake`，保留 `DJANGO_DEBUG=true`，再运行：
 
 ```sh
 uv run --env-file .env python manage.py migrate
@@ -21,7 +21,7 @@ uv run --env-file .env python manage.py seed_forum
 uv run --env-file .env python manage.py runserver 127.0.0.1:8000
 ```
 
-`.env.example` 默认开启本地 DEBUG、关闭开发登录；不要用于公网部署。`.env`、SQLite 数据库、验证码邮件和缓存都不进入版本控制。命令仅绑定 loopback 地址。
+`.env.example` 默认开启本地 DEBUG、关闭开发登录，文字安全模式默认为 `wechat`。上述 `fake` 仅适用于本机演示身份和 loopback 请求；共享测试必须改回 `wechat` 并配置真实凭据。不要将开发配置用于公网部署。`.env`、SQLite 数据库、验证码邮件和缓存都不进入版本控制。命令仅绑定 loopback 地址。
 
 - 管理界面：[http://127.0.0.1:8000/manage/](http://127.0.0.1:8000/manage/)
 - 本地接口文档：[http://127.0.0.1:8000/api/v1/docs](http://127.0.0.1:8000/api/v1/docs)
@@ -52,6 +52,8 @@ uv run --env-file .env python manage.py runserver 127.0.0.1:8000
 
 `seed_content` / `seed_forum` 仅创建本地示例内容，不授予会员资格；再次运行不会重置已修改记录。示例图片网址、联系方式与正文不是正式内容；官方联系方式默认留空。需要回到原型时恢复 `MOCK_IN_DEVELOP=true`、`DEVELOPMENT_LOGIN_USERNAME=null` 并清除开发 token 后重新编译。
 
+`seed_forum` 在本地演示库中创建六个板块。正式空库执行 migrations 后不会自动拥有板块，当前后台也没有板块创建入口；正式板块初始化仍是上线前待完成项。不要在真实环境开启开发开关或运行演示种子来填补这一缺口。
+
 论坛当前仅支持文字。图片上传、头像上传和账号注销尚未实现；请勿按正式全功能服务验收。微信文字内容安全已接入昵称、帖子、评论和反馈，检测不可用时阻止保存；平台真实凭据尚未联调。人工审核仍保留，不能代替平台检测。
 
 ## 微信管理员确认登录
@@ -70,7 +72,7 @@ uv run --env-file .env python manage.py runserver 127.0.0.1:8000
 uv run --env-file .env python manage.py bootstrap_owner --user-id USER_ID
 ```
 
-此命令只初始化第一位负责人，不为用户创建密码，拒绝演示身份；后续通过现有负责人管理账号。不得从请求中的任意 `openid`、角色或 `is_staff` 字段建立权限。
+此命令要求目标库中不存在任何启用的负责人，包括 `demo-owner`；只初始化第一位负责人，不为用户创建密码，拒绝演示身份。真实测试库应与本地演示库分开，不要迁入演示负责人后直接执行此命令。后续通过现有负责人管理账号。不得从请求中的任意 `openid`、角色或 `is_staff` 字段建立权限。
 
 ## 检查
 
