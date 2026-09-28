@@ -1,0 +1,25 @@
+<view class="page">
+  <view class="hero">
+    <view class="eyebrow">NEW STUDENT GUIDE</view>
+    <view class="hero__title">慢慢熟悉，安心出发</view>
+    <view class="hero__description">从行前准备到校园生活，在这里找到新生信息。</view>
+  </view>
+
+  <view wx:if="{{isDemo}}" class="notice">示例手册，非正式指引。正式内容待学生会审核发布。</view>
+
+  <view wx:if="{{loading}}" class="state">正在加载手册…</view>
+  <view wx:elif="{{failed}}" class="state">
+    <view>暂时无法加载手册</view>
+    <button class="button button--secondary" bindtap="load">重新加载</button>
+  </view>
+  <view wx:elif="{{!sections.length}}" class="state">手册内容准备中，请稍后再来。</view>
+  <block wx:else>
+    <view wx:for="{{sections}}" wx:key="id" class="section">
+      <view class="section__number">0{{index + 1}}</view>
+      <view class="section__title">{{item.title}}</view>
+      <text class="section__content" selectable>{{item.content}}</text>
+    </view>
+  </block>
+
+  <button class="button button--secondary" bindtap="onContact">联系学生会小助手</button>
+</view>

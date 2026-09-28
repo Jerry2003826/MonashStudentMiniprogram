@@ -7,6 +7,6 @@
     "t-loading": "tdesign-miniprogram/loading/loading",
     "merchant-card": "/components/merchant-card/index"
   },
-  "navigationBarTitleText": "合作商家",
+  "navigationBarTitleText": "会员优惠",
   "enablePullDownRefresh": true
 }

@@ -14,22 +14,24 @@ function meWith(membership: Partial<MembershipInfo>): Me {
     nickname: '小蒙',
     avatar_url: null,
     banned_until: null,
+    staff_role: null,
     membership: {
       state: 'none',
       member_no: null,
       email: null,
       expires_at: null,
       renewable: false,
+      application: null,
       ...membership,
     },
   }
 }
 
 describe('memberEntry', () => {
-  it('还没登录或没认证时引导去认证', () => {
-    expect(memberEntry(null)).toMatchObject({ action: '去认证', url: VERIFY_URL })
+  it('还没登录或没认证时引导去申请', () => {
+    expect(memberEntry(null)).toMatchObject({ action: '去申请', url: VERIFY_URL })
     expect(memberEntry(meWith({ state: 'none' }))).toMatchObject({
-      action: '去认证',
+      action: '去申请',
       url: VERIFY_URL,
     })
   })
@@ -58,9 +60,9 @@ describe('memberEntry', () => {
     expect(entry.description).toContain('即将到期')
   })
 
-  it('已过期时引导去续期', () => {
+  it('已过期时引导申请续期', () => {
     expect(memberEntry(meWith({ state: 'expired' }))).toMatchObject({
-      action: '去续期',
+      action: '申请续期',
       url: VERIFY_URL,
     })
   })
@@ -71,9 +73,9 @@ describe('memberEntry', () => {
 })
 
 describe('profileMemberStatus', () => {
-  it('未认证时提示去认证', () => {
+  it('未认证时提示去申请', () => {
     expect(profileMemberStatus(meWith({ state: 'none' }))).toEqual({
-      text: '未认证，去认证',
+      text: '申请会员，审核通过后可用',
       url: VERIFY_URL,
       highlight: true,
     })
@@ -90,7 +92,7 @@ describe('profileMemberStatus', () => {
       profileMemberStatus(
         meWith({ state: 'active', expires_at: '2026-10-10T12:00:00+10:00', renewable: true }),
       ),
-    ).toEqual({ text: '2026-10-10 到期，去续期', url: VERIFY_URL, highlight: true })
+    ).toEqual({ text: '2026-10-10 到期，申请续期', url: VERIFY_URL, highlight: true })
   })
 
   it('已过期时提示续期', () => {
@@ -109,10 +111,48 @@ describe('profileMemberStatus', () => {
 })
 
 describe('memberCardState', () => {
-  it('未认证时不显示卡面，引导去认证', () => {
+  it.each(['pending', 'rejected'] as const)('%s 申请不产生有效卡或出示会员卡入口', (status) => {
+    const me = meWith({
+      application: {
+        id: 1,
+        email: 'a@student.monash.edu',
+        status,
+        submitted_at: '2026-09-28T00:00:00Z',
+        reviewed_at: null,
+        review_note: status === 'rejected' ? '请补充材料' : '',
+      },
+    })
+    expect(memberCardState(me).variant).toBe('empty')
+    expect(memberCardState(me).actionUrl).toBe(VERIFY_URL)
+    expect(memberEntry(me).url).toBe(VERIFY_URL)
+    expect(profileMemberStatus(me).url).toBe(VERIFY_URL)
+    if (status === 'rejected') expect(memberCardState(me).hint).toContain('请补充材料')
+  })
+
+  it('有效会员续期待审时仍可出示原卡，过期后不能继续用', () => {
+    const membership: Partial<MembershipInfo> = {
+      state: 'active',
+      renewable: true,
+      application: {
+        id: 2,
+        email: 'a@student.monash.edu',
+        status: 'pending',
+        submitted_at: '2026-09-28T00:00:00Z',
+        reviewed_at: null,
+        review_note: '',
+      },
+    }
+    expect(memberCardState(meWith(membership)).variant).toBe('active')
+    expect(memberEntry(meWith(membership)).url).toBe(CARD_URL)
+    expect(profileMemberStatus(meWith(membership)).text).toContain('续期审核中')
+    expect(memberCardState(meWith({ ...membership, state: 'expired' })).variant).toBe('inactive')
+    expect(memberEntry(meWith({ ...membership, state: 'expired' })).url).toBe(VERIFY_URL)
+  })
+
+  it('未认证时不显示卡面，引导去申请', () => {
     expect(memberCardState(meWith({ state: 'none' }))).toMatchObject({
       variant: 'empty',
-      action: '去认证',
+      action: '申请会员',
       actionUrl: VERIFY_URL,
     })
   })
@@ -127,7 +167,7 @@ describe('memberCardState', () => {
   it('快到期的有效会员仍显示有效卡面，但提供续期入口', () => {
     expect(memberCardState(meWith({ state: 'active', renewable: true }))).toMatchObject({
       variant: 'active',
-      action: '去续期',
+      action: '申请续期',
       actionUrl: VERIFY_URL,
     })
   })
@@ -136,7 +176,7 @@ describe('memberCardState', () => {
     expect(memberCardState(meWith({ state: 'expired' }))).toMatchObject({
       variant: 'inactive',
       badge: '已过期',
-      action: '去续期',
+      action: '申请续期',
     })
   })
 

@@ -1,4 +1,4 @@
-import type { MembershipInfo, Me } from '../../../types/api'
+import type { MembershipApplication, MembershipInfo, Me } from '../../../types/api'
 import {
   createUser,
   currentUser,
@@ -19,9 +19,17 @@ const NICKNAME_MAX_LENGTH = 20
 export function membershipInfo(
   membership: MockMembership | null,
   now = Date.now(),
+  application: MembershipApplication | null = null,
 ): MembershipInfo {
   if (!membership) {
-    return { state: 'none', member_no: null, email: null, expires_at: null, renewable: false }
+    return {
+      state: 'none',
+      member_no: null,
+      email: null,
+      expires_at: null,
+      renewable: false,
+      application: application ? { ...application } : null,
+    }
   }
   const expiresAt = Date.parse(membership.expires_at)
   const state = membership.revoked ? 'revoked' : expiresAt <= now ? 'expired' : 'active'
@@ -33,6 +41,7 @@ export function membershipInfo(
     email: membership.email,
     expires_at: membership.expires_at,
     renewable,
+    application: application ? { ...application } : null,
   }
 }
 
@@ -49,7 +58,8 @@ export function buildMe(db: MockDb): Me {
     nickname: user.nickname,
     avatar_url: user.avatar_url,
     banned_until: user.banned_until,
-    membership: membershipInfo(db.membership),
+    staff_role: user.staff_role,
+    membership: membershipInfo(db.membership, Date.now(), db.application),
   }
 }
 
@@ -75,11 +85,16 @@ function deleteAccount(): null {
   const previous = currentUser(db)
   previous.nickname = DELETED_NICKNAME
   previous.avatar_url = null
+  previous.staff_role = null
+  for (const email of Object.keys(db.membershipEmailOwners)) {
+    if (db.membershipEmailOwners[email] === previous.id) delete db.membershipEmailOwners[email]
+  }
 
   const fresh = createUser(takeId(db))
   db.users.push(fresh)
   db.meId = fresh.id
   db.membership = null
+  db.application = null
   db.emailCodes = {}
   db.likedPostIds = []
   return null

@@ -11,6 +11,7 @@ import { installFakeWx } from '../helpers/wx'
 
 vi.mock('../../../miniprogram/config', () => ({
   MOCK_DELAY_MS: 0,
+  getDevelopmentLoginUsername: () => null,
   isMockEnabled: () => false,
   getApiBaseUrl: () => 'https://api.test/api/v1',
 }))
@@ -21,7 +22,15 @@ function makeMe(state: Me['membership']['state']): Me {
     nickname: '微信用户',
     avatar_url: null,
     banned_until: null,
-    membership: { state, member_no: null, email: null, expires_at: null, renewable: false },
+    staff_role: null,
+    membership: {
+      state,
+      member_no: null,
+      email: null,
+      expires_at: null,
+      renewable: false,
+      application: null,
+    },
   }
 }
 

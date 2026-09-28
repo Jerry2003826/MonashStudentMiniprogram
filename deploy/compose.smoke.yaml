@@ -1,0 +1,53 @@
+# Disposable local verification only. Never use these synthetic credentials online.
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: trial_smoke
+      POSTGRES_USER: smoke
+      POSTGRES_PASSWORD: smoke-only-internal
+    tmpfs:
+      - /var/lib/postgresql/data
+    volumes:
+      - pg-socket:/var/run/postgresql
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U smoke -d trial_smoke]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  app:
+    image: ${SMOKE_APP_IMAGE:-miniprogram-api:staging-check}
+    build:
+      context: ../server
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DJANGO_DEBUG: 'false'
+      ENABLE_DEV_LOGIN: 'false'
+      DJANGO_SECRET_KEY: synthetic-container-check-only-0123456789-abcdefghijklmnopqrstuvwxyz
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      WECHAT_APPID: wxb78bc0898b0d8c1c
+      WECHAT_APPSECRET: synthetic-never-call-wechat
+      DATABASE_URL: postgresql://smoke:smoke-only-internal@/trial_smoke?host=%2Fvar%2Frun%2Fpostgresql&sslmode=disable
+      DB_POOL_MODE: direct
+      DB_CONN_MAX_AGE: '0'
+      DJANGO_TRUST_PROXY_SSL_HEADER: 'true'
+      DJANGO_SECURE_SSL_REDIRECT: 'true'
+      DJANGO_SECURE_HSTS_SECONDS: '3600'
+      EMAIL_HOST: smtp.invalid
+      DEFAULT_FROM_EMAIL: smoke@invalid.test
+      PORT: '8080'
+      WEB_CONCURRENCY: '1'
+      GUNICORN_THREADS: '4'
+    ports:
+      - 127.0.0.1:${SMOKE_HTTP_PORT:-18081}:8080
+    volumes:
+      - pg-socket:/var/run/postgresql:ro
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+volumes:
+  pg-socket:

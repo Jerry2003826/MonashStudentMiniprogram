@@ -1,0 +1,44 @@
+{% extends 'portal/base.html' %}
+{% load static %}
+{% block title %}微信确认登录 · 学生会管理后台{% endblock %}
+{% block content %}
+<section class="login-card panel">
+  <p class="eyebrow">ADMINISTRATION</p>
+  <h1>使用微信确认登录</h1>
+  <p class="muted">在浏览器生成确认码，再由管理员本人在小程序中确认。这里不使用用户名和密码登录。</p>
+  <ol class="login-steps">
+    <li>点击下方按钮，生成本浏览器的六位确认码。</li>
+    <li>在小程序登录后，进入管理员登录确认页，手动输入确认码。</li>
+    <li>确认后，本浏览器会自动进入管理后台。</li>
+  </ol>
+  {% if pairing_code %}
+  <div class="pairing" data-poll-url="{% url 'portal:poll_pairing' %}" data-remaining="{{ pairing_remaining }}">
+    <div class="pairing-label">本浏览器的确认码</div>
+    <output class="pairing-code" aria-label="六位登录确认码">{{ pairing_code }}</output>
+    <p class="muted">五分钟内有效。仅确认你自己发起的浏览器登录。</p>
+    <p id="pairing-status" role="status">等待小程序确认…</p>
+  </div>
+  {% endif %}
+  <form id="pairing-create" method="post" action="{% url 'portal:begin_pairing' %}">
+    {% csrf_token %}
+    <button class="button" type="submit">{% if pairing_code %}重新生成确认码{% else %}生成确认码{% endif %}</button>
+  </form>
+</section>
+{% if dev_login_enabled %}
+<section class="panel demo-panel">
+  <h2>本地演示登录</h2>
+  <p class="muted">仅在开发环境与演示开关同时开启时可用，不代表生产微信认证。</p>
+  <form method="post" action="{% url 'portal:dev_login' %}" class="inline-form">
+    {% csrf_token %}
+    <label for="demo-username">演示身份</label>
+    <select id="demo-username" name="username">
+      <option value="demo-owner">账号负责人</option>
+      <option value="demo-reviewer">会员审核员</option>
+      <option value="demo-editor">内容编辑员</option>
+    </select>
+    <button class="button button-secondary" type="submit">进入本地演示</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}
+{% block scripts %}{% if pairing_code %}<script src="{% static 'portal/pairing.js' %}" defer></script>{% endif %}{% endblock %}

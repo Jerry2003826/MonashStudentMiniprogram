@@ -27,13 +27,13 @@ export function defaultMessage(code: ClientErrorCode): string {
     case 'FORBIDDEN':
       return '没有权限进行这个操作'
     case 'MEMBERSHIP_REQUIRED':
-      return '请先完成学生认证'
+      return '需要有效会员资格，请提交申请并等待人工审核通过'
     case 'USER_BANNED':
       return '你已被禁言，暂时不能发帖和评论'
     case 'NOT_FOUND':
       return '内容不存在或已被删除'
     case 'ALREADY_MEMBER':
-      return '当前微信号已经绑定了其他学生邮箱'
+      return '邮箱或微信账号已存在会员绑定，请联系学生会处理'
     case 'RENEWAL_NOT_OPEN':
       return '到期前 30 天内才能续期'
     case 'MEMBERSHIP_REVOKED':

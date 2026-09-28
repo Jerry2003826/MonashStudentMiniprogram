@@ -2,6 +2,9 @@
   "name": "monash-miniprogram",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=24 <25"
+  },
   "description": "蒙纳士中国学生会微信小程序",
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -9,6 +12,9 @@
     "test": "vitest run",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "prepare:components": "node scripts/prepare-components.mjs",
+    "prepare:trial": "node scripts/prepare-trial.mjs",
+    "check:trial": "node scripts/prepare-trial.mjs --check",
     "build:icons": "node scripts/build-icon-font.mjs"
   },
   "dependencies": {
@@ -16,6 +22,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
+    "@types/node": "^24.19.0",
     "eslint": "^9.39.5",
     "miniprogram-api-typings": "^5.2.3",
     "prettier": "^3.9.9",

@@ -1,6 +1,15 @@
 # 蒙纳士中国学生会小程序：技术方案
 
+> **基础设施约束（2026-09-28）：** 用户明确不依赖微信云资源。测试方案采用 Google Cloud Run + Supabase PostgreSQL，保留 Google Cloud SQL 迁移能力；不接入微信云开发、云函数、云托管、云数据库或云存储。小程序使用普通 HTTPS API，微信登录和内容检测作为平台接口单独接入。实施步骤见[部署方案](../deploy/README.md)。
+
+> **数据库托管决定（2026-09-28）：** 为 Supabase PostgreSQL / Google Cloud SQL for PostgreSQL 保持兼容，后端通过标准 Django ORM 连接，前端不绑定托管商。配置、维护窗口搬迁和回滚步骤见[数据库迁移说明](database-migration.md)。下方单机数据库部署图保留为早期方案，不再是托管约束。
+
+> 最新内容与审核实现见[第三批说明](plans/2026-09-28-content-backend.md)，本文保留早期需求和设计背景。
+
+> **会员与权限最新实现：** 见[本地会员后台说明](plans/2026-09-28-membership-backend.md)。邮箱验证改为待审核，禁止自动转移会员；配对登录和管理权限已在本地实现，旧版自动认证/密码后台描述不再适用。
+
 > 版本 v0.1（草稿），2026-09-24。
+> **2026-09-28 设计变更：** 本文描述第 0 期基线。活动、支持内容、反馈和附近商家的新增接口，以及人工会员审批、微信管理员登录、后台权限的后续设计见[规划对齐记录](plans/2026-09-28-planning-alignment.md)。下文邮箱验证直接入会、管理员用户名密码登录和后台不配置权限的描述均需在真实后端阶段替换。
 > 这份文档写给小程序组的开发同学，说明「怎么做」。功能需求见[需求文档](./requirements.md)，两份文档对不上时，以需求文档为准。
 
 ## 1. 技术选型
@@ -9,14 +18,14 @@
 | --- | --- | --- |
 | 小程序 | 原生小程序 + TypeScript + TDesign 小程序组件库 | 官方写法，教程最多，基础一般的同学照着官方文档就能写；TypeScript 让接口字段写错时编译就报错 |
 | 后端 | Python 3.12 + Django 5.2（长期支持版）+ Django Ninja | Django 自带管理后台、用户权限和数据库迁移；Django Ninja 写接口简洁，并能自动生成 OpenAPI 接口文档 |
-| 数据库 | PostgreSQL 17 | Django 支持最完整的数据库 |
-| 部署 | 澳洲 VPS + Docker Compose + Caddy | 一台机器跑全部服务；Caddy 自动申请和续期 HTTPS 证书 |
+| 数据库 | 标准 PostgreSQL；Supabase 或 Google Cloud SQL 托管 | 保留 Django migrations，避免供应商专属接口；具体主版本在部署时确定并回归 |
+| 部署 | Google Cloud Run；数据库独立托管于 Supabase | 标准容器和 HTTPS API，不依赖微信云资源；后续可迁至 Google Cloud SQL |
 | 邮件 | 任意支持 SMTP 的发信服务（如 Resend、Brevo） | 走 Django 自带的邮件接口，换服务商只需要改配置 |
 | 工具 | uv、Ruff、pytest；npm、ESLint、Prettier、openapi-typescript | |
 
 有两件事刻意不做：
 
-- **不用微信云开发**：云开发不支持境外主体小程序，而正式上线要用学生会的境外主体账号。
+- **不依赖微信云资源**：遵循用户明确的托管选择，采用独立后端和标准 PostgreSQL；不以微信云产品的主体资格作为选型依据。
 - **不引入 Redis 和 Celery**：按学生会的用户规模，验证码限流和 access_token 缓存放在数据库里就够了。少一个组件，就少一份运维负担。
 
 ## 2. 整体架构

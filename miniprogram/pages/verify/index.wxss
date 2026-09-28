@@ -30,6 +30,26 @@
   margin-top: 12rpx;
   color: var(--text-color-secondary);
   font-size: 26rpx;
+  line-height: 1.7;
+  text-align: center;
+}
+
+.application-card,
+.status-note {
+  padding: 28rpx;
+  margin-bottom: 24rpx;
+  background: var(--bg-color-card);
+  border-radius: var(--radius-card);
+  line-height: 1.8;
+  font-size: 26rpx;
+  overflow-wrap: break-word;
+}
+.review-note {
+  margin-top: 12rpx;
+  color: var(--brand-color);
+}
+.refresh-action {
+  margin-top: 28rpx;
 }
 
 .form {

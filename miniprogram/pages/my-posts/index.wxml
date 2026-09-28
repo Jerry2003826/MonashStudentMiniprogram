@@ -1,7 +1,12 @@
 <view class="page">
   <post-card wx:for="{{items}}" wx:key="id" class="post-item" post="{{item}}" />
 
-  <view wx:if="{{loaded && !items.length}}" class="empty">
+  <view wx:if="{{loadFailed}}" class="load-error">
+    <text>帖子暂时无法加载，请稍后重试</text>
+    <t-button theme="primary" variant="outline" size="small" bind:tap="loadMore">重新加载</t-button>
+  </view>
+
+  <view wx:if="{{loaded && !items.length && !loadFailed}}" class="empty">
     <t-empty icon="chat" description="你还没有发过帖子" />
     <view class="empty__action">
       <t-button theme="primary" variant="outline" bind:tap="onCreatePost">去发帖</t-button>

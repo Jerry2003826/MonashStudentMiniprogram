@@ -1,0 +1,40 @@
+<view class="toolbar">
+  <view class="search">
+    <t-search value="{{keyword}}" shape="round" placeholder="搜索活动与资讯" bind:submit="onSearch" bind:clear="onClearSearch" />
+  </view>
+  <t-tabs value="{{category}}" bind:change="onCategoryChange">
+    <t-tab-panel wx:for="{{categories}}" wx:key="value" label="{{item.label}}" value="{{item.value}}" />
+  </t-tabs>
+</view>
+
+<view class="page">
+  <view wx:if="{{hasExamples}}" class="example-notice">当前为示例内容，正式活动及公众号文章待发布。</view>
+  <swiper wx:if="{{featured.length}}" class="featured" autoplay="{{featured.length > 1}}" circular="{{featured.length > 1}}" indicator-dots="{{featured.length > 1}}" indicator-color="rgba(255, 255, 255, 0.4)" indicator-active-color="#ffffff">
+    <swiper-item wx:for="{{featured}}" wx:key="id">
+      <view class="featured-card featured-card--{{item.category}}" hover-class="pressed" data-id="{{item.id}}" bind:tap="onActivityTap">
+        <view class="featured-card__top"><text>{{index + 1}} / {{featured.length}}</text><text wx:if="{{item.is_example}}" class="example-badge">示例</text></view>
+        <view class="featured-card__title">{{item.title}}</view>
+        <view class="featured-card__summary">{{item.summary}}</view>
+        <view class="featured-card__action">查看内容 <t-icon name="chevron-right" size="28rpx" /></view>
+      </view>
+    </swiper-item>
+  </swiper>
+
+  <view class="section-title">{{keyword ? '搜索结果' : '全部内容'}}</view>
+  <view wx:for="{{items}}" wx:key="id" class="activity-card" hover-class="pressed" data-id="{{item.id}}" bind:tap="onActivityTap">
+    <view class="activity-card__icon"><t-icon name="calendar" size="40rpx" /></view>
+    <view class="activity-card__body">
+      <view class="activity-card__title">{{item.title}}<text wx:if="{{item.is_example}}" class="inline-badge">示例</text></view>
+      <view class="activity-card__summary">{{item.summary}}</view>
+      <view class="activity-card__meta">{{item.dateText}} · {{item.location}}</view>
+    </view>
+    <t-icon name="chevron-right" size="28rpx" />
+  </view>
+  <t-empty wx:if="{{loaded && !items.length && !errorMessage}}" icon="search" description="{{keyword ? '没有找到匹配内容，试试其他关键词' : '这个分类暂时没有内容'}}" />
+  <view wx:if="{{errorMessage}}" class="error-state">
+    <view>{{errorMessage}}</view>
+    <button class="retry-button" size="mini" bind:tap="onRetry">重新加载</button>
+  </view>
+  <view wx:if="{{loading}}" class="footer"><t-loading theme="circular" size="40rpx" text="加载中" /></view>
+  <view wx:elif="{{loaded && items.length && !hasMore && !errorMessage}}" class="footer">已展示全部内容</view>
+</view>

@@ -2,3 +2,7 @@ node_modules
 miniprogram_npm
 docs
 package-lock.json
+# Django 模板采用 Django 语法，Python 代码由 Ruff 检查
+server/**/*.html
+server/.venv/
+server/var/

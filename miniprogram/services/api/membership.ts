@@ -9,7 +9,7 @@ export async function sendEmailCode(email: string): Promise<void> {
 
 export async function verifyEmail(email: string, code: string): Promise<Me> {
   const body: VerifyEmailBody = { email, code }
-  const me = await request<Me>({ method: 'POST', path: '/membership/verify', body })
+  const me = await request<Me>({ method: 'POST', path: '/membership/applications', body })
   setCachedMe(me)
   return me
 }

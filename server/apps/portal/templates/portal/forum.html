@@ -1,0 +1,46 @@
+{% extends 'portal/base.html' %}
+{% block title %}论坛审核 · 学生会管理后台{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <p class="eyebrow">COMMUNITY</p><h1>论坛审核</h1>
+  <p class="muted">帖子和评论经过人工审核后公开。处理举报时，请同时核对原内容是否需要撤回。</p>
+</div>
+<nav class="tabs tabs-wrap" aria-label="内容类型">
+  <a class="{% if kind == 'posts' %}selected{% endif %}" href="?kind=posts">帖子</a>
+  <a class="{% if kind == 'comments' %}selected{% endif %}" href="?kind=comments">评论</a>
+  <a class="{% if kind == 'reports' %}selected{% endif %}" href="?kind=reports">举报</a>
+</nav>
+<nav class="tabs tabs-wrap" aria-label="处理状态">
+  {% if kind == 'reports' %}
+  <a class="{% if status == 'new' %}selected{% endif %}" href="?kind=reports&amp;status=new">待处理</a>
+  <a class="{% if status == 'resolved' %}selected{% endif %}" href="?kind=reports&amp;status=resolved">已处理</a>
+  {% else %}
+  <a class="{% if status == 'pending' %}selected{% endif %}" href="?kind={{ kind }}&amp;status=pending">待审核</a>
+  <a class="{% if status == 'approved' %}selected{% endif %}" href="?kind={{ kind }}&amp;status=approved">已批准</a>
+  <a class="{% if status == 'rejected' %}selected{% endif %}" href="?kind={{ kind }}&amp;status=rejected">已拒绝</a>
+  {% endif %}
+</nav>
+{% if focus_id %}<p class="notice">当前查看记录 #{{ focus_id }}。<a href="?kind={{ kind }}&amp;status={{ status }}">返回完整列表</a></p>{% endif %}
+{% for entry in entries %}{% with record=entry.record %}
+<article class="panel moderation-card">
+  {% if kind == 'reports' %}
+  <div class="card-heading"><div><h2>举报 #{{ record.id }}</h2><p class="muted">{% if record.target_type == 'post' %}帖子{% else %}评论{% endif %} #{{ record.target_id }} · {{ record.user.nickname }} · {{ record.created_at|date:'Y-m-d H:i' }}</p></div><span class="badge {% if record.status == 'resolved' %}badge-approved{% else %}badge-pending{% endif %}">{% if record.status == 'resolved' %}已处理{% else %}待处理{% endif %}</span></div>
+  <p><strong>举报原因：</strong>{{ record.get_reason_display }}</p>
+  <p class="pre-wrap">{{ record.detail }}</p>
+  <div class="content-preview"><strong>被举报内容{% if entry.target_title %} · {{ entry.target_title }}{% endif %}</strong><p class="pre-wrap">{{ entry.target_preview }}</p><span class="muted">展示最多 600 字。</span>{% if entry.target_url %}<p><a href="{{ entry.target_url }}">查看并审核原内容 →</a></p>{% endif %}</div>
+  {% if record.status == 'new' %}
+  <form class="review-form" method="post" action="{% url 'portal:forum_report' record.id %}">{% csrf_token %}<label for="report-note-{{ record.id }}">处理备注（必填）</label><textarea id="report-note-{{ record.id }}" name="note" maxlength="1000" rows="3"></textarea><button class="button" type="submit">确认标记为已处理</button></form>
+  {% else %}<p class="pre-wrap"><strong>处理备注：</strong>{{ record.resolution_note|default:'未填写' }}</p>{% endif %}
+  {% else %}
+  <div class="card-heading"><div><h2>{% if kind == 'posts' %}{{ record.title }}{% else %}评论 #{{ record.id }}{% endif %}</h2><p class="muted">{{ record.author.nickname }} · {{ record.created_at|date:'Y-m-d H:i' }}{% if kind == 'posts' %} · {{ record.board.name }} · 帖子 #{{ record.id }}{% else %} · 所属帖子 #{{ record.post_id }}{% endif %}</p></div><span class="badge badge-{{ record.status }}">{% if record.status == 'pending' %}待审核{% elif record.status == 'approved' %}已批准{% else %}已拒绝{% endif %}</span></div>
+  <p class="pre-wrap content-preview">{{ record.content }}</p>
+  {% if record.reviewed_at %}<p class="muted">上次审核：{{ record.reviewer.nickname }} · {{ record.reviewed_at|date:'Y-m-d H:i' }}</p>{% if record.review_note %}<p class="pre-wrap">{{ record.review_note }}</p>{% endif %}{% endif %}
+  <form class="review-form" method="post" action="{% url 'portal:forum_review' kind record.id %}">
+    {% csrf_token %}<label for="decision-{{ record.id }}">审核结果</label><select id="decision-{{ record.id }}" name="decision" required><option value="" selected disabled>请选择审核结果</option><option value="approved">批准发布</option><option value="rejected">拒绝发布</option></select><label for="note-{{ record.id }}">审核备注（拒绝时必填）</label><textarea name="note" id="note-{{ record.id }}" maxlength="1000" rows="2"></textarea><button class="button" type="submit">确认提交审核结果</button>
+  </form>
+  {% if kind == 'posts' and record.status == 'approved' %}<form class="pin-form" method="post" action="{% url 'portal:forum_pin' record.id %}">{% csrf_token %}<input type="hidden" name="pinned" value="{% if record.is_pinned %}false{% else %}true{% endif %}"><button class="button button-secondary" type="submit">{% if record.is_pinned %}取消置顶{% else %}置顶此帖{% endif %}</button></form>{% endif %}
+  {% endif %}
+</article>
+{% endwith %}{% empty %}<section class="panel empty-state"><h2>暂无此状态的记录</h2><p class="muted">新的帖子、评论与举报会在这里显示。</p></section>{% endfor %}
+{% if page.paginator.num_pages > 1 %}<nav class="pagination" aria-label="分页">{% if page.has_previous %}<a href="?kind={{ kind }}&amp;status={{ status }}&amp;page={{ page.previous_page_number }}">上一页</a>{% endif %}<span>第 {{ page.number }} / {{ page.paginator.num_pages }} 页</span>{% if page.has_next %}<a href="?kind={{ kind }}&amp;status={{ status }}&amp;page={{ page.next_page_number }}">下一页</a>{% endif %}</nav>{% endif %}
+{% endblock %}

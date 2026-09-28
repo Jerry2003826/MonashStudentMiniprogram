@@ -1,5 +1,5 @@
 .page {
-  padding: 24rpx 0 48rpx;
+  padding: 24rpx 0 calc(140rpx + env(safe-area-inset-bottom));
 }
 
 .profile-card {
@@ -9,6 +9,13 @@
   padding: 40rpx 32rpx;
   background-color: var(--bg-color-card);
   border-radius: var(--radius-card);
+}
+
+.testing-notice {
+  margin: 24rpx var(--spacing-page) 0;
+  color: var(--brand-color);
+  font-size: 24rpx;
+  line-height: 1.6;
 }
 
 .avatar-button {
@@ -72,6 +79,13 @@
   font-size: 24rpx;
 }
 
+.profile-user-id {
+  margin-top: 12rpx;
+  color: var(--brand-color);
+  font-size: 23rpx;
+  line-height: 1.5;
+}
+
 .group {
   display: block;
   margin-top: 24rpx;
@@ -79,6 +93,20 @@
 
 .note--highlight {
   color: var(--brand-color) !important;
+}
+
+.membership-title {
+  flex: 0 0 128rpx !important;
+  margin-right: 16rpx !important;
+  white-space: nowrap;
+}
+
+.membership-note {
+  flex: 1 1 0 !important;
+  min-width: 0;
+  font-size: 26rpx !important;
+  line-height: 1.5;
+  text-align: right;
 }
 
 .danger {

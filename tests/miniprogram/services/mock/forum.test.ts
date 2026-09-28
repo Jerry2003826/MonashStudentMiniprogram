@@ -7,17 +7,18 @@ import type {
   LikeResult,
   Paginated,
   PostDetail,
-  PostImage,
   PostSummary,
 } from '../../../../miniprogram/types/api'
 import { call, errorCodeOf } from './call'
+import { approveMockApplication } from '../../helpers/membership'
 
 const STAFF_BOARD_ID = 6
 const SECONDHAND_BOARD_ID = 1
 
 function becomeMember(): void {
   call('POST', '/membership/email-code', { email: 'me0001@student.monash.edu' })
-  call('POST', '/membership/verify', { email: 'me0001@student.monash.edu', code: '123456' })
+  call('POST', '/membership/applications', { email: 'me0001@student.monash.edu', code: '123456' })
+  approveMockApplication()
 }
 
 function createPost(overrides: Partial<CreatePostBody> = {}): PostDetail {
@@ -129,14 +130,15 @@ describe('发帖', () => {
     expect(errorCodeOf(() => createPost({ content: '这是一条违规内容' }))).toBe('CONTENT_RISKY')
   })
 
-  it('发布成功后排在置顶帖后面的第一位', () => {
+  it('提交进入待审，只在自己的帖子中出现，其他人不能直达', () => {
     becomeMember()
     const post = createPost()
-
-    const { items } = listPosts()
-
     expect(post.is_mine).toBe(true)
-    expect(items[1].id).toBe(post.id)
+    expect(post.moderation_status).toBe('pending')
+    expect(listPosts().items.some((item) => item.id === post.id)).toBe(false)
+    expect(listPosts({ author: 'me' }).items[0].id).toBe(post.id)
+    getDb().meId = 4
+    expect(errorCodeOf(() => call('GET', `/forum/posts/${post.id}`))).toBe('NOT_FOUND')
   })
 })
 
@@ -147,21 +149,12 @@ describe('图片审核', () => {
     )
   })
 
-  it('上传后先是审核中，5 秒后通过；审核通过前不出现在列表缩略图里', () => {
+  it('会员也不能上传图片，不会定时自动审核通过', () => {
     becomeMember()
-    const image = call<PostImage>('POST', '/forum/images', { file_path: 'wxfile://a.jpg' })
-    const post = createPost({ image_ids: [image.id] })
-
-    expect(image.check_status).toBe('pending')
-    expect(call<PostDetail>('GET', `/forum/posts/${post.id}`).images[0].check_status).toBe(
-      'pending',
+    expect(errorCodeOf(() => call('POST', '/forum/images', { file_path: 'wxfile://a.jpg' }))).toBe(
+      'VALIDATION_ERROR',
     )
-    expect(listPosts({ author: 'me' }).items[0].thumbnail_urls).toEqual([])
-
-    vi.advanceTimersByTime(5000)
-
-    expect(call<PostDetail>('GET', `/forum/posts/${post.id}`).images[0].check_status).toBe('pass')
-    expect(listPosts({ author: 'me' }).items[0].thumbnail_urls).toEqual(['wxfile://a.jpg'])
+    expect(errorCodeOf(() => createPost({ image_ids: [11] }))).toBe('VALIDATION_ERROR')
   })
 })
 
@@ -190,7 +183,7 @@ describe('评论', () => {
     )
   })
 
-  it('评论成功后评论数加 1，并能回复某人', () => {
+  it('回复本帖参与者进入待审，不增加公开评论数', () => {
     becomeMember()
     const before = call<PostDetail>('GET', '/forum/posts/2').comment_count
 
@@ -201,7 +194,8 @@ describe('评论', () => {
 
     expect(comment.is_mine).toBe(true)
     expect(comment.reply_to?.id).toBe(4)
-    expect(call<PostDetail>('GET', '/forum/posts/2').comment_count).toBe(before + 1)
+    expect(comment.moderation_status).toBe('pending')
+    expect(call<PostDetail>('GET', '/forum/posts/2').comment_count).toBe(before)
   })
 
   it('空评论、超过 500 字和违规内容都会失败', () => {
@@ -248,14 +242,14 @@ describe('删除', () => {
     expect(errorCodeOf(() => call('GET', `/forum/posts/${post.id}`))).toBe('NOT_FOUND')
   })
 
-  it('删除自己的评论后，评论数减 1', () => {
+  it('删除自己的待审评论，不改变公开评论数', () => {
     becomeMember()
     const comment = call<Comment>('POST', '/forum/posts/2/comments', { content: '还在吗' })
     const before = call<PostDetail>('GET', '/forum/posts/2').comment_count
 
     call('DELETE', `/forum/comments/${comment.id}`)
 
-    expect(call<PostDetail>('GET', '/forum/posts/2').comment_count).toBe(before - 1)
+    expect(call<PostDetail>('GET', '/forum/posts/2').comment_count).toBe(before)
   })
 })
 

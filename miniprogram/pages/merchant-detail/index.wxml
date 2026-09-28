@@ -19,6 +19,9 @@
   <view class="card">
     <view class="name">{{merchant.name}}</view>
     <view class="tags">
+      <t-tag wx:if="{{merchant.is_example}}" size="small" variant="light" theme="warning"
+        >示例商家</t-tag
+      >
       <t-tag size="small" variant="light" theme="primary">{{merchant.category.name}}</t-tag>
       <t-tag size="small" variant="light">{{merchant.area.name}}</t-tag>
     </view>
@@ -31,7 +34,10 @@
       <text>{{merchant.discount_summary}}</text>
     </view>
     <view class="discount__terms">使用条件：{{merchant.discount_terms}}</view>
-    <view class="discount__how">到店出示电子会员卡即可享受</view>
+    <view class="discount__how"
+      >{{merchant.is_example ? '示例优惠仅供展示，不可用于实际兑换' : testingLabel ?
+      '内测展示，测试会员卡不作为正式优惠凭证' : '到店使用前请核对商家优惠条件'}}</view
+    >
   </view>
 
   <view class="info">
@@ -62,7 +68,12 @@
   </view>
 </view>
 
-<t-empty wx:elif="{{errorMessage}}" class="state" icon="info-circle" description="{{errorMessage}}" />
+<t-empty
+  wx:elif="{{errorMessage}}"
+  class="state"
+  icon="info-circle"
+  description="{{errorMessage}}"
+/>
 
 <view wx:else class="state">
   <t-loading theme="circular" size="48rpx" />

@@ -1,3 +1,4 @@
+import { getDevelopmentLoginUsername } from '../config'
 import type { LoginResult, Me } from '../types/api'
 import { ApiError } from './errors'
 import { request } from './request'
@@ -9,18 +10,22 @@ let cachedMe: Me | null = null
 function wxLogin(): Promise<string> {
   return new Promise((resolve, reject) => {
     wx.login({
-      success: (res) => resolve(res.code),
+      success: (res) => {
+        if (res.code) resolve(res.code)
+        else reject(new ApiError('UNAUTHORIZED', '微信未返回登录凭证，请重试'))
+      },
       fail: () => reject(new ApiError('NETWORK_ERROR', '微信登录失败，请稍后再试')),
     })
   })
 }
 
 async function login(): Promise<void> {
-  const code = await wxLogin()
+  const developmentUser = getDevelopmentLoginUsername()
+  const body = developmentUser ? { username: developmentUser } : { code: await wxLogin() }
   const result = await request<LoginResult>({
     method: 'POST',
-    path: '/auth/wechat-login',
-    body: { code },
+    path: developmentUser ? '/auth/dev-login' : '/auth/wechat-login',
+    body,
     auth: false,
   })
   setToken(result.token)

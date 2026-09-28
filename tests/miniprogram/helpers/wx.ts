@@ -10,6 +10,7 @@ export interface FakeRequestOptions {
   method?: string
   data?: unknown
   header?: Record<string, string>
+  timeout?: number
   success?: (res: FakeResponse) => void
   fail?: (err: { errMsg: string }) => void
 }

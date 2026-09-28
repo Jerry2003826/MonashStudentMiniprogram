@@ -1,11 +1,16 @@
 <view class="page">
   <view class="profile-card">
-    <button class="avatar-button" open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar">
+    <button
+      class="avatar-button"
+      open-type="{{mockFeatures ? 'chooseAvatar' : ''}}"
+      bind:chooseavatar="onChooseAvatar"
+      disabled="{{!mockFeatures}}"
+    >
       <image wx:if="{{avatarUrl}}" class="avatar" src="{{avatarUrl}}" mode="aspectFill" />
       <view wx:else class="avatar avatar--placeholder">
         <t-icon name="user" size="56rpx" />
       </view>
-      <view class="avatar-badge">
+      <view wx:if="{{mockFeatures}}" class="avatar-badge">
         <t-icon name="edit" size="22rpx" />
       </view>
     </button>
@@ -19,9 +24,17 @@
         bindblur="onNicknameBlur"
         bindconfirm="onNicknameBlur"
       />
-      <view class="profile-hint">点击头像或昵称即可修改</view>
+      <view class="profile-hint"
+        >{{mockFeatures ? '点击头像或昵称即可修改' : '点击昵称修改 · 头像修改暂未开放'}}</view
+      >
+      <view wx:if="{{me}}" class="profile-user-id" bindtap="onCopyUserId"
+        >用户编号 #{{me.id}} · 点击复制</view
+      >
     </view>
   </view>
+  <view wx:if="{{testingLabel}}" class="testing-notice"
+    >{{testingLabel}} · 欢迎通过意见反馈告诉我们使用体验</view
+  >
 
   <view class="group">
     <t-cell-group theme="card">
@@ -29,18 +42,30 @@
         title="会员状态"
         left-icon="card"
         note="{{status.text}}"
-        t-class-note="{{status.highlight ? 'note--highlight' : ''}}"
+        t-class-center="membership-title"
+        t-class-note="membership-note {{status.highlight ? 'note--highlight' : ''}}"
         arrow
         hover
         bind:click="onStatusTap"
       />
       <t-cell title="我的帖子" left-icon="chat" arrow hover bind:click="onMyPosts" />
+      <t-cell
+        wx:if="{{me.staff_role}}"
+        title="确认后台登录"
+        left-icon="secured"
+        arrow
+        hover
+        bind:click="onStaffLogin"
+      />
     </t-cell-group>
   </view>
 
   <view class="group">
     <t-cell-group theme="card">
-      <t-cell title="关于我们" left-icon="info-circle" arrow hover bind:click="onAbout" />
+      <t-cell title="新生手册" left-icon="file" arrow hover bind:click="onHandbook" />
+      <t-cell title="联系小助手" left-icon="chat-message" arrow hover bind:click="onContact" />
+      <t-cell title="意见反馈" left-icon="edit" arrow hover bind:click="onFeedback" />
+      <t-cell title="关于学联" left-icon="info-circle" arrow hover bind:click="onAbout" />
       <t-cell
         title="用户协议"
         left-icon="file"
@@ -63,9 +88,9 @@
   <view class="group">
     <t-cell-group theme="card">
       <t-cell
-        title="注销账号"
+        title="{{mockFeatures ? '注销账号' : '账号与数据请求'}}"
         left-icon="logout"
-        t-class-title="danger"
+        t-class-title="{{mockFeatures ? 'danger' : ''}}"
         hover
         bind:click="onDeleteAccount"
       />

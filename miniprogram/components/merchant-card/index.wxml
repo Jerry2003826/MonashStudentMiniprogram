@@ -9,7 +9,11 @@
   />
   <view class="info">
     <view class="name">{{merchant.name}}</view>
+    <view wx:if="{{showDistance && distanceText}}" class="distance">{{distanceText}}</view>
     <view class="tags">
+      <t-tag wx:if="{{merchant.is_example}}" size="small" variant="light" theme="warning"
+        >示例商家</t-tag
+      >
       <t-tag size="small" variant="light" theme="primary">{{merchant.category.name}}</t-tag>
       <t-tag size="small" variant="light">{{merchant.area.name}}</t-tag>
     </view>

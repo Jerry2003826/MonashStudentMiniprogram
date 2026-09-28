@@ -8,7 +8,6 @@ import {
   reportContent,
   unlikePost,
 } from '../../services/api/forum'
-import { ensureLogin } from '../../services/auth'
 import { defaultMessage, isApiError, showError } from '../../services/errors'
 import type { Author, Comment, PostDetail, ReportTargetType } from '../../types/api'
 import { formatRelativeTime } from '../../utils/format'
@@ -57,10 +56,9 @@ Page({
   async onLoad(query: Record<string, string | undefined>) {
     this.postId = Number(query.id)
     try {
-      await ensureLogin()
       const post = await getPost(this.postId)
       this.setData({ post, postTime: formatRelativeTime(post.created_at) })
-      await this.loadComments()
+      if (post.moderation_status === 'approved') await this.loadComments()
     } catch (err) {
       this.setData({
         errorMessage: isApiError(err) ? err.message : defaultMessage('INTERNAL_ERROR'),
@@ -69,12 +67,32 @@ Page({
     }
   },
 
+  async onPullDownRefresh() {
+    this.setData({
+      post: null,
+      errorMessage: '',
+      comments: [],
+      commentCursor: null,
+      hasMoreComments: true,
+    })
+    try {
+      await this.onLoad({ id: String(this.postId) })
+    } finally {
+      wx.stopPullDownRefresh()
+    }
+  },
+
   onReachBottom() {
     this.loadComments()
   },
 
   async loadComments() {
-    if (this.data.loadingComments || !this.data.hasMoreComments) return
+    if (
+      this.data.post?.moderation_status !== 'approved' ||
+      this.data.loadingComments ||
+      !this.data.hasMoreComments
+    )
+      return
     this.setData({ loadingComments: true })
     try {
       const page = await listComments(this.postId, this.data.commentCursor ?? undefined)
@@ -97,7 +115,7 @@ Page({
 
   async onToggleLike() {
     const post = this.data.post
-    if (!post) return
+    if (!post || post.moderation_status !== 'approved') return
     try {
       if (!(await ensureMember('点赞'))) return
       const result = post.liked ? await unlikePost(post.id) : await likePost(post.id)
@@ -118,7 +136,7 @@ Page({
 
   onReplyComment(e: WechatMiniprogram.TouchEvent) {
     const comment = this.data.comments[Number(e.currentTarget.dataset.index)]
-    if (!comment || comment.is_mine) return
+    if (!comment || comment.is_mine || comment.moderation_status !== 'approved') return
     this.setData({ replyTo: comment.author, inputFocus: true })
   },
 
@@ -129,7 +147,7 @@ Page({
   async onSendComment() {
     const post = this.data.post
     const content = this.data.draft.trim()
-    if (!post || !content || this.data.sending) return
+    if (!post || post.moderation_status !== 'approved' || !content || this.data.sending) return
     this.setData({ sending: true })
     try {
       if (!(await ensureMember('评论'))) return
@@ -139,11 +157,16 @@ Page({
       })
       this.setData({
         comments: [...this.data.comments, toView(comment)],
-        'post.comment_count': post.comment_count + 1,
+        'post.comment_count':
+          post.comment_count + (comment.moderation_status === 'approved' ? 1 : 0),
         draft: '',
         replyTo: null,
       })
       markDirty('forum', 'my-posts')
+      wx.showToast({
+        title: comment.moderation_status === 'pending' ? '评论已提交，等待审核' : '评论已发送',
+        icon: 'none',
+      })
     } catch (err) {
       showError(err)
     } finally {
@@ -154,10 +177,14 @@ Page({
   async onMore() {
     const post = this.data.post
     if (!post) return
-    const items = post.is_mine ? ['举报', '删除帖子'] : ['举报']
+    const items: string[] = []
+    if (post.moderation_status === 'approved') items.push('举报')
+    if (post.is_mine) items.push('删除帖子')
+    if (!items.length) return
     const index = await pickAction(items)
-    if (index === 0) await this.report('post', post.id)
-    if (index === 1) await this.removePost()
+    if (index === null) return
+    if (items[index] === '举报') await this.report('post', post.id)
+    if (items[index] === '删除帖子') await this.removePost()
   },
 
   async onCommentActions(e: WechatMiniprogram.TouchEvent) {
@@ -211,7 +238,10 @@ Page({
       await deleteComment(comment.id)
       this.setData({
         comments: this.data.comments.filter((item) => item.id !== comment.id),
-        'post.comment_count': post.comment_count - 1,
+        'post.comment_count': Math.max(
+          0,
+          post.comment_count - (comment.moderation_status === 'approved' ? 1 : 0),
+        ),
       })
       markDirty('forum', 'my-posts')
     } catch (err) {

@@ -4,5 +4,6 @@
     "t-button": "tdesign-miniprogram/button/button",
     "t-icon": "tdesign-miniprogram/icon/icon"
   },
-  "navigationBarTitleText": "学生认证"
+  "navigationBarTitleText": "会员申请",
+  "enablePullDownRefresh": true
 }

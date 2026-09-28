@@ -1,11 +1,8 @@
-import type {
-  MerchantDetail,
-  MerchantFilters,
-  MerchantSummary,
-  Paginated,
-} from '../../../types/api'
+import type { MerchantDetail, MerchantFilters, Paginated } from '../../../types/api'
+import type { Coordinates, LocatedMerchantSummary } from '../../../types/merchant-location'
+import { isValidCoordinates, straightLineDistance } from '../../../utils/distance'
 import { getDb } from '../db'
-import { includesText, mockError, paginate, paramNumber, queryNumber } from '../helpers'
+import { includesText, mockError, paginate, paramNumber } from '../helpers'
 import type { MockRequest, MockRoute } from '../router'
 import { toMerchantDetail, toMerchantSummary } from '../views'
 
@@ -19,10 +16,50 @@ function getFilters(): MerchantFilters {
   }
 }
 
-function listMerchants({ query }: MockRequest): Paginated<MerchantSummary> {
+function readFilter(query: Record<string, string>, key: string): number | undefined {
+  const raw = query[key]
+  if (raw === undefined) return undefined
+  if (!/^[1-9]\d*$/.test(raw) || !Number.isSafeInteger(Number(raw))) {
+    throw mockError('VALIDATION_ERROR', '商家筛选条件无效')
+  }
+  return Number(raw)
+}
+
+function readLocation(query: Record<string, string>): Coordinates | null {
+  const hasLatitude = query.latitude !== undefined
+  const hasLongitude = query.longitude !== undefined
+  if (!hasLatitude && !hasLongitude) {
+    if (query.sort === 'distance') throw mockError('VALIDATION_ERROR', '附近排序需要当前位置')
+    return null
+  }
+  const decimal = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$/
+  if (
+    !hasLatitude ||
+    !hasLongitude ||
+    !decimal.test(query.latitude.trim()) ||
+    !decimal.test(query.longitude.trim())
+  ) {
+    throw mockError('VALIDATION_ERROR', '请同时提供有效的经纬度')
+  }
+  const location = { latitude: Number(query.latitude), longitude: Number(query.longitude) }
+  if (!isValidCoordinates(location)) throw mockError('VALIDATION_ERROR', '经纬度超出有效范围')
+  return location
+}
+
+function listMerchants({ query }: MockRequest): Paginated<LocatedMerchantSummary> {
   const db = getDb()
-  const category = queryNumber(query, 'category')
-  const area = queryNumber(query, 'area')
+  const category = readFilter(query, 'category')
+  const area = readFilter(query, 'area')
+  if (query.sort !== undefined && query.sort !== 'distance') {
+    throw mockError('VALIDATION_ERROR', '不支持的商家排序方式')
+  }
+  if (
+    query.cursor !== undefined &&
+    (!/^(0|[1-9]\d*)$/.test(query.cursor) || !Number.isSafeInteger(Number(query.cursor)))
+  ) {
+    throw mockError('VALIDATION_ERROR', '分页游标无效')
+  }
+  const location = readLocation(query)
   const keyword = query.q ?? ''
   const matched = db.merchants.filter(
     (merchant) =>
@@ -31,8 +68,17 @@ function listMerchants({ query }: MockRequest): Paginated<MerchantSummary> {
       (area === undefined || merchant.area_id === area) &&
       includesText(merchant.name, keyword),
   )
-  const page = paginate(matched, query.cursor, PAGE_SIZE)
-  return { ...page, items: page.items.map((merchant) => toMerchantSummary(db, merchant)) }
+  const items: LocatedMerchantSummary[] = matched.map((merchant) => ({
+    ...toMerchantSummary(db, merchant),
+    latitude: merchant.latitude,
+    longitude: merchant.longitude,
+    distance_m: location ? straightLineDistance(location, merchant) : null,
+  }))
+  if (query.sort === 'distance') {
+    items.sort((a, b) => (a.distance_m ?? 0) - (b.distance_m ?? 0) || a.id - b.id)
+  }
+  // 对所有符合筛选条件的商家先排序，再分页，避免只在当前页内排序。
+  return paginate(items, query.cursor, PAGE_SIZE)
 }
 
 function getMerchant({ params }: MockRequest): MerchantDetail {

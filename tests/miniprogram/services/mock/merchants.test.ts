@@ -1,16 +1,18 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { resetDb } from '../../../../miniprogram/services/mock/db'
+import { getDb, resetDb } from '../../../../miniprogram/services/mock/db'
 import type {
   HomeData,
   MerchantDetail,
   MerchantFilters,
-  MerchantSummary,
   Paginated,
 } from '../../../../miniprogram/types/api'
+import type { LocatedMerchantSummary } from '../../../../miniprogram/types/merchant-location'
 import { call, errorCodeOf } from './call'
 
-function list(query: Record<string, string | number | undefined> = {}): Paginated<MerchantSummary> {
-  return call<Paginated<MerchantSummary>>('GET', '/merchants', undefined, query)
+function list(
+  query: Record<string, string | number | undefined> = {},
+): Paginated<LocatedMerchantSummary> {
+  return call<Paginated<LocatedMerchantSummary>>('GET', '/merchants', undefined, query)
 }
 
 beforeEach(() => {
@@ -72,6 +74,83 @@ describe('商家列表', () => {
 
   it('没有匹配时返回空列表', () => {
     expect(list({ q: '不存在的商家' })).toEqual({ items: [], next_cursor: null })
+  })
+
+  it('默认提供商家地图坐标，不伪造用户距离', () => {
+    for (const merchant of list().items) {
+      expect(Number.isFinite(merchant.latitude)).toBe(true)
+      expect(Number.isFinite(merchant.longitude)).toBe(true)
+      expect(merchant.distance_m).toBeNull()
+    }
+  })
+
+  it('先对所有匹配商家按距离排序，再分页，第二页无重复或遗漏', () => {
+    const db = getDb()
+    db.merchants.forEach((merchant) => {
+      merchant.latitude = 0
+      merchant.longitude = 8 - merchant.id
+    })
+    const query = { latitude: 0, longitude: 0, sort: 'distance' }
+    const first = list(query)
+    const second = list({ ...query, cursor: first.next_cursor ?? undefined })
+    expect(first.items.map((merchant) => merchant.id)).toEqual([8, 7, 6, 5, 4, 3])
+    expect(second.items.map((merchant) => merchant.id)).toEqual([2, 1])
+    expect(second.next_cursor).toBeNull()
+    expect(first.items[0].distance_m).toBe(0)
+    const distances = [...first.items, ...second.items].map((merchant) => merchant.distance_m)
+    expect(distances).toEqual([...distances].sort((a, b) => (a ?? 0) - (b ?? 0)))
+  })
+
+  it('等距离时按商家 ID 稳定排序，不依赖存储顺序', () => {
+    const db = getDb()
+    db.merchants.reverse().forEach((merchant) => {
+      merchant.latitude = 0
+      merchant.longitude = 0
+    })
+    expect(
+      list({ latitude: 0, longitude: 0, sort: 'distance' }).items.map((item) => item.id),
+    ).toEqual([1, 2, 3, 4, 5, 6])
+  })
+
+  it('附近排序继续遵守分类、区域、名称和上架条件', () => {
+    const db = getDb()
+    const merchant = db.merchants[0]
+    const query = {
+      latitude: merchant.latitude,
+      longitude: merchant.longitude,
+      sort: 'distance',
+      category: merchant.category_id,
+      area: merchant.area_id,
+      q: merchant.name,
+    }
+    expect(list(query).items.map((item) => item.id)).toEqual([merchant.id])
+    merchant.is_active = false
+    expect(list(query).items).toEqual([])
+  })
+
+  it.each([
+    { latitude: 0 },
+    { longitude: 0 },
+    { latitude: '', longitude: 0 },
+    { latitude: ' ', longitude: 0 },
+    { latitude: '0x1', longitude: 0 },
+    { latitude: 91, longitude: 0 },
+    { latitude: -91, longitude: 0 },
+    { latitude: 0, longitude: 181 },
+    { latitude: 0, longitude: -181 },
+    { latitude: NaN, longitude: 0 },
+    { latitude: 0, longitude: Infinity },
+    { sort: 'distance' },
+    { sort: 'walking' },
+    { cursor: '-1' },
+    { cursor: '1.5' },
+    { cursor: 'bad' },
+    { cursor: '' },
+    { cursor: '9007199254740992' },
+    { category: 'all' },
+    { area: -1 },
+  ])('拒绝无效坐标、排序或分页参数 %o', (query) => {
+    expect(errorCodeOf(() => list(query))).toBe('VALIDATION_ERROR')
   })
 })
 

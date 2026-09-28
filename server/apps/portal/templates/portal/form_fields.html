@@ -1,0 +1,10 @@
+{% if form.non_field_errors %}<div class="notice notice-error form-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+<div class="editor-fields">
+{% for field in form %}
+<div class="form-field {% if field.field.widget.input_type == 'checkbox' %}form-field-checkbox{% elif field.field.widget.input_type == None %}form-field-wide{% endif %}">
+  {% if field.field.widget.input_type == 'checkbox' %}<label class="checkbox-label" for="{{ field.id_for_label }}">{{ field }} {{ field.label }}</label>{% else %}<label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span class="required-mark" aria-label="必填"> *</span>{% endif %}</label>{{ field }}{% endif %}
+  {% if field.help_text %}<p class="field-help">{{ field.help_text }}</p>{% endif %}
+  {% if field.errors %}<div class="field-errors" role="alert">{{ field.errors }}</div>{% endif %}
+</div>
+{% endfor %}
+</div>

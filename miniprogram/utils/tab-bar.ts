@@ -1,4 +1,4 @@
-export type TabValue = 'home' | 'merchants' | 'forum' | 'profile'
+export type TabValue = 'home' | 'merchants' | 'forum' | 'activities' | 'profile'
 
 export interface TabItem {
   value: TabValue
@@ -9,8 +9,9 @@ export interface TabItem {
 
 export const TABS: TabItem[] = [
   { value: 'home', label: '首页', icon: 'home', path: '/pages/home/index' },
-  { value: 'merchants', label: '商家', icon: 'shop', path: '/pages/merchants/index' },
   { value: 'forum', label: '论坛', icon: 'chat', path: '/pages/forum/index' },
+  { value: 'activities', label: '活动', icon: 'calendar', path: '/pages/activities/index' },
+  { value: 'merchants', label: '优惠', icon: 'discount', path: '/pages/merchants/index' },
   { value: 'profile', label: '我的', icon: 'user', path: '/pages/profile/index' },
 ]
 

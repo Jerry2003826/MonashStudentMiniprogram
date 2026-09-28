@@ -11,10 +11,13 @@ Page({
     nickname: '',
     avatarUrl: '',
     status: profileMemberStatus(null),
+    mockFeatures: false,
+    testingLabel: '',
   },
 
   onShow() {
     syncTabBar(this, 'profile')
+    this.setData({ mockFeatures: isMockEnabled(), testingLabel: getTestingLabel() })
     this.load()
   },
 
@@ -36,6 +39,10 @@ Page({
   },
 
   async onChooseAvatar(e: WechatMiniprogram.CustomEvent<{ avatarUrl: string }>) {
+    if (!isMockEnabled()) {
+      wx.showToast({ title: '头像修改暂未开放', icon: 'none' })
+      return
+    }
     try {
       this.applyMe(await uploadAvatar(e.detail.avatarUrl))
     } catch (err) {
@@ -63,6 +70,14 @@ Page({
     wx.navigateTo({ url: this.data.status.url })
   },
 
+  onStaffLogin() {
+    if (this.data.me?.staff_role) wx.navigateTo({ url: '/pages/staff-login/index' })
+  },
+
+  onCopyUserId() {
+    if (this.data.me) wx.setClipboardData({ data: String(this.data.me.id), fail: showError })
+  },
+
   onMyPosts() {
     wx.navigateTo({ url: '/pages/my-posts/index' })
   },
@@ -71,11 +86,34 @@ Page({
     wx.navigateTo({ url: '/pages/about/index' })
   },
 
+  onHandbook() {
+    wx.navigateTo({ url: '/pages/handbook/index' })
+  },
+
+  onContact() {
+    wx.navigateTo({ url: '/pages/contact/index' })
+  },
+
+  onFeedback() {
+    wx.navigateTo({ url: '/pages/feedback/index' })
+  },
+
   onAgreement(e: WechatMiniprogram.CustomEvent) {
     wx.navigateTo({ url: `/pages/agreement/index?type=${e.currentTarget.dataset.type}` })
   },
 
   onDeleteAccount() {
+    if (!isMockEnabled()) {
+      wx.showModal({
+        title: '账号与数据请求',
+        content: '自助注销暂未开放。你可以通过意见反馈提交账号或数据处理请求，由运营方跟进。',
+        confirmText: '去反馈',
+        success: (result) => {
+          if (result.confirm) this.onFeedback()
+        },
+      })
+      return
+    }
     wx.showModal({
       title: '注销账号',
       content:
@@ -95,3 +133,5 @@ Page({
     })
   },
 })
+import { isMockEnabled } from '../../config'
+import { getTestingLabel } from '../../deployment'

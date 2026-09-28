@@ -1,0 +1,10 @@
+{% extends 'portal/base.html' %}
+{% block title %}用户反馈 · 学生会管理后台{% endblock %}
+{% block content %}
+<div class="page-heading"><p class="eyebrow">FEEDBACK</p><h1>用户反馈</h1><p class="muted">查看用户的问题与建议，记录处理进度和备注。</p></div>
+<nav class="tabs" aria-label="处理状态"><a class="{% if status == 'new' %}selected{% endif %}" href="?status=new">待处理</a><a class="{% if status == 'resolved' %}selected{% endif %}" href="?status=resolved">已处理</a></nav>
+{% for record in page %}
+<article class="panel"><div class="card-heading"><div><h2>{{ record.get_category_display }} · #{{ record.id }}</h2><p class="muted">{{ record.user.nickname }} · {{ record.created_at|date:'Y-m-d H:i' }}</p></div><span class="badge {% if record.status == 'resolved' %}badge-approved{% else %}badge-pending{% endif %}">{{ record.get_status_display }}</span></div><p class="pre-wrap">{{ record.content }}</p>{% if record.contact %}<p class="contact-detail"><strong>联系方式：</strong>{{ record.contact }}</p>{% endif %}{% if record.resolution_note %}<div class="content-preview"><strong>处理备注</strong><p class="pre-wrap">{{ record.resolution_note }}</p></div>{% endif %}<a class="button button-secondary" href="{% url 'portal:feedback_edit' record.id %}">查看并处理</a></article>
+{% empty %}<section class="panel empty-state"><h2>暂无此状态的反馈</h2><p class="muted">新的用户反馈会在这里显示。</p></section>{% endfor %}
+{% if page.paginator.num_pages > 1 %}<nav class="pagination" aria-label="分页">{% if page.has_previous %}<a href="?status={{ status }}&amp;page={{ page.previous_page_number }}">上一页</a>{% endif %}<span>第 {{ page.number }} / {{ page.paginator.num_pages }} 页</span>{% if page.has_next %}<a href="?status={{ status }}&amp;page={{ page.next_page_number }}">下一页</a>{% endif %}</nav>{% endif %}
+{% endblock %}

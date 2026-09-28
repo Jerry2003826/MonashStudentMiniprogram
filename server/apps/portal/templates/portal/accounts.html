@@ -1,0 +1,38 @@
+{% extends 'portal/base.html' %}
+{% block title %}管理员账号 · 学生会管理后台{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <p class="eyebrow">ADMINISTRATORS</p>
+  <h1>管理员账号</h1>
+  <p class="muted">仅账号负责人可以管理角色和访问状态。账号绑定已有微信用户，停用与撤权会立即影响其现有会话。</p>
+</div>
+<section class="panel">
+  <h2>添加管理员</h2>
+  <p class="muted">对方须先在小程序使用微信登录。输入其用户编号，为该微信身份分配角色。</p>
+  <form method="post" action="{% url 'portal:account_create' %}" class="create-form">
+    {% csrf_token %}
+    {{ create_form.as_p }}
+    <button class="button" type="submit">创建管理员账号</button>
+  </form>
+</section>
+<div class="role-guide"><strong>角色说明</strong><span>账号负责人：账号管理、会员审核、内容管理</span><span>会员审核员：会员审核</span><span>内容编辑员：内容管理、论坛审核、用户反馈</span></div>
+{% for account in accounts %}
+<article class="panel account-card">
+  <div class="card-heading">
+    <div><h2>{{ account.user.nickname|default:account.user.username }}</h2><p class="muted">微信用户 #{{ account.user_id }} · 管理员 #{{ account.id }}</p></div>
+    <span class="badge {% if account.is_active %}badge-approved{% else %}badge-rejected{% endif %}">{% if account.is_active %}已启用{% else %}已停用{% endif %}</span>
+  </div>
+  <form method="post" action="{% url 'portal:account_update' account.id %}" class="account-form">
+    {% csrf_token %}
+    <label for="role-{{ account.id }}">角色</label>
+    <select id="role-{{ account.id }}" name="role">
+      <option value="owner" {% if account.role == 'owner' %}selected{% endif %}>账号负责人</option>
+      <option value="reviewer" {% if account.role == 'reviewer' %}selected{% endif %}>会员审核员</option>
+      <option value="editor" {% if account.role == 'editor' %}selected{% endif %}>内容编辑员</option>
+    </select>
+    <label class="checkbox-label"><input type="checkbox" name="is_active" {% if account.is_active %}checked{% endif %}>允许访问管理后台</label>
+    <button class="button button-secondary" type="submit">保存角色与状态</button>
+  </form>
+</article>
+{% empty %}<section class="panel empty-state">暂无管理员账号。</section>{% endfor %}
+{% endblock %}

@@ -1,3 +1,16 @@
+<view class="page-intro">
+  <view class="eyebrow">MEMBER BENEFITS</view>
+  <view class="page-title">吃喝日常，会员有惠</view>
+  <view class="page-description">发现校园周边合作商家，到店出示会员卡享优惠</view>
+  <button class="member-entry" hover-class="member-entry--pressed" bind:tap="onEntryTap">
+    <view class="member-entry__copy">
+      <view class="member-entry__title">{{entry.title}}</view>
+      <view class="member-entry__description">{{entry.description}}</view>
+    </view>
+    <text class="member-entry__action">{{entry.action}} ›</text>
+  </button>
+</view>
+
 <view class="toolbar">
   <view class="search">
     <t-search
@@ -16,17 +29,87 @@
     />
     <t-dropdown-item options="{{areaOptions}}" value="{{area}}" bind:change="onAreaChange" />
   </t-dropdown-menu>
+  <view class="view-actions">
+    <button
+      class="view-action {{nearby ? 'view-action--active' : ''}}"
+      bind:tap="onNearbyTap"
+      loading="{{locating}}"
+      disabled="{{locating}}"
+    >
+      {{nearby ? '取消附近排序' : '按附近排序'}}
+    </button>
+    <button class="view-action {{mapVisible ? 'view-action--active' : ''}}" bind:tap="onToggleMap">
+      {{mapVisible ? '收起地图' : '查看地图'}}
+    </button>
+  </view>
+</view>
+
+<view wx:if="{{showPrivacy}}" class="privacy-card">
+  <view class="privacy-title">使用位置，发现附近优惠</view>
+  <view class="privacy-description"
+    >同意隐私指引后将申请当前位置，用于本次商家的直线距离排序。取消后仍可浏览全部商家。</view
+  >
+  <button class="privacy-link" bind:tap="onOpenPrivacyContract">阅读{{privacyContractName}}</button>
+  <view class="privacy-actions">
+    <button class="view-action" bind:tap="onCancelPrivacy">暂不使用</button>
+    <button
+      id="nearby-privacy-agree"
+      class="view-action view-action--active"
+      open-type="agreePrivacyAuthorization"
+      bindagreeprivacyauthorization="onAgreePrivacy"
+    >
+      同意并获取位置
+    </button>
+  </view>
+</view>
+
+<view wx:if="{{locationMessage}}" class="location-message">{{locationMessage}}</view>
+
+<view wx:if="{{mapVisible && !showPrivacy}}" class="map-panel">
+  <map
+    wx:if="{{markers.length}}"
+    class="merchant-map"
+    latitude="{{mapCentre.latitude}}"
+    longitude="{{mapCentre.longitude}}"
+    markers="{{markers}}"
+    include-points="{{mapPoints}}"
+    scale="13"
+    show-location="{{false}}"
+    enable-poi="{{false}}"
+    bindmarkertap="onMarkerTap"
+    bindcallouttap="onMarkerTap"
+  />
+  <view wx:else class="map-placeholder"
+    >{{loading ? '正在加载商家位置…' : '当前没有可显示的商家位置'}}</view
+  >
+  <view class="map-caption"
+    >地图仅显示当前已加载的 {{markers.length}} 家商家。点击标记查看详情{{hasMore ?
+    '，继续加载可查看更多' : ''}}。</view
+  >
 </view>
 
 <view class="list">
-  <merchant-card wx:for="{{items}}" wx:key="id" class="merchant-item" merchant="{{item}}" />
-  <t-empty
-    wx:if="{{loaded && !items.length}}"
-    icon="search"
-    description="没有找到符合条件的商家"
+  <view class="list-heading">{{nearby ? '附近优惠 · 由近到远' : '发现合作商家'}}</view>
+  <view class="distance-note"
+    >{{nearby ? '基于本次获取的位置，距离为直线估算，非步行或驾车距离。' :
+    '开启附近排序可查看直线距离，非步行或驾车距离。'}}</view
+  >
+  <merchant-card
+    wx:for="{{items}}"
+    wx:key="id"
+    class="merchant-item"
+    merchant="{{item}}"
+    show-distance="{{nearby}}"
   />
+  <t-empty wx:if="{{loaded && !items.length}}" icon="search" description="没有找到符合条件的商家" />
   <view wx:if="{{loading}}" class="footer">
     <t-loading theme="circular" size="40rpx" text="加载中" />
   </view>
+  <button wx:elif="{{loadFailed}}" class="retry-button" bind:tap="loadMore">
+    加载失败，点击重试
+  </button>
+  <button wx:elif="{{loaded && hasMore}}" class="retry-button" bind:tap="loadMore">
+    加载更多商家
+  </button>
   <view wx:elif="{{loaded && items.length && !hasMore}}" class="footer">没有更多商家了</view>
 </view>

@@ -1,4 +1,26 @@
 <view class="page">
+  <view class="welcome">
+    <view class="welcome__topline">
+      <text class="welcome__eyebrow">MONASH · 同学同行</text>
+      <text class="welcome__date">{{dateLabel}}</text>
+    </view>
+    <view class="welcome__title">在蒙纳士，发现更多</view>
+    <view class="welcome__subtitle">相聚校园，也连接生活。</view>
+    <view class="welcome__actions">
+      <button class="welcome__button" bindtap="onHandbook">
+        <t-icon name="file" size="30rpx" /> 新生手册
+      </button>
+      <button class="welcome__button welcome__button--share" open-type="share">
+        <t-icon name="chat" size="30rpx" /> 分享给好友
+      </button>
+    </view>
+  </view>
+  <view wx:if="{{demo}}" class="demo-note"
+    >开发演示 · 活动与商家为示例，会员申请不会自动通过审核</view
+  >
+  <view wx:elif="{{testingLabel}}" class="demo-note"
+    >{{testingLabel}} · 测试会员卡不代表正式优惠权益，欢迎通过意见反馈参与改进</view
+  >
   <swiper
     wx:if="{{banners.length}}"
     class="banner"
@@ -32,7 +54,53 @@
   </view>
 
   <view class="section-header">
-    <text class="section-title">精选商家</text>
+    <text class="section-title">精彩活动</text>
+    <view class="section-more" bind:tap="onMoreActivities"
+      ><text>更多活动</text><t-icon name="chevron-right" size="28rpx"
+    /></view>
+  </view>
+  <view wx:if="{{activitiesLoading && !activities.length}}" class="loading"
+    ><t-loading theme="circular" size="40rpx"
+  /></view>
+  <view wx:elif="{{activitiesError}}" class="status-note" bindtap="load"
+    >活动暂时无法加载，点击重试</view
+  >
+  <view wx:elif="{{!activities.length}}" class="status-note">新活动发布后会出现在这里</view>
+  <view
+    wx:for="{{activities}}"
+    wx:key="id"
+    class="activity-card"
+    data-id="{{item.id}}"
+    bindtap="onActivityTap"
+    hover-class="card--pressed"
+  >
+    <view class="activity-card__icon"><t-icon name="calendar" size="40rpx" /></view>
+    <view class="activity-card__body">
+      <view class="activity-card__title">{{item.title}}</view>
+      <view class="activity-card__summary">{{item.summary}}</view>
+      <text wx:if="{{item.is_example}}" class="example-label">示例活动</text>
+    </view>
+    <t-icon name="chevron-right" size="28rpx" />
+  </view>
+
+  <view class="section-header"><text class="section-title">校园生活</text></view>
+  <view class="service-grid">
+    <view class="service" bindtap="onServiceInfo"
+      ><text class="service__title">墨尔本天气</text
+      ><text class="service__status">服务准备中</text></view
+    >
+    <view class="service" bindtap="onServiceInfo"
+      ><text class="service__title">人民币兑澳元</text
+      ><text class="service__status">服务准备中</text></view
+    >
+  </view>
+  <view class="contact-entry" bindtap="onContact"
+    ><t-icon name="chat-message" size="36rpx" /><text>有问题，联系学联小助手</text
+    ><t-icon name="chevron-right" size="28rpx"
+  /></view>
+
+  <view class="section-header">
+    <text class="section-title">精选优惠</text>
     <view class="section-more" bind:tap="onMoreMerchants">
       <text>全部商家</text>
       <t-icon name="chevron-right" size="28rpx" />
@@ -42,10 +110,7 @@
   <view wx:if="{{loading && !featured.length}}" class="loading">
     <t-loading theme="circular" size="48rpx" />
   </view>
-  <merchant-card
-    wx:for="{{featured}}"
-    wx:key="id"
-    class="merchant-item"
-    merchant="{{item}}"
-  />
+  <view wx:elif="{{homeError}}" class="status-note" bindtap="load">商家暂时无法加载，点击重试</view>
+  <view wx:elif="{{!featured.length}}" class="status-note">暂无精选商家</view>
+  <merchant-card wx:for="{{featured}}" wx:key="id" class="merchant-item" merchant="{{item}}" />
 </view>

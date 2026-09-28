@@ -36,6 +36,7 @@ export function toMerchantSummary(db: MockDb, merchant: MockMerchant): MerchantS
     category: { ...category },
     area: { ...area },
     discount_summary: merchant.discount_summary,
+    is_example: true,
   }
 }
 
@@ -73,12 +74,17 @@ function visibleImages(db: MockDb, post: MockPost): PostImage[] {
 }
 
 export function commentCountOf(db: MockDb, postId: number): number {
-  return db.comments.filter((comment) => comment.post_id === postId && !comment.deleted).length
+  return db.comments.filter(
+    (comment) =>
+      comment.post_id === postId && !comment.deleted && comment.moderation_status === 'approved',
+  ).length
 }
 
 export function toPostSummary(db: MockDb, post: MockPost): PostSummary {
   return {
     id: post.id,
+    moderation_status: post.moderation_status,
+    review_note: post.moderation_status === 'approved' ? '' : post.review_note,
     board: boardOf(db, post),
     title: post.title,
     excerpt: post.content.replace(/\s+/g, ' ').slice(0, EXCERPT_LENGTH),
@@ -97,6 +103,8 @@ export function toPostSummary(db: MockDb, post: MockPost): PostSummary {
 export function toPostDetail(db: MockDb, post: MockPost): PostDetail {
   return {
     id: post.id,
+    moderation_status: post.moderation_status,
+    review_note: post.moderation_status === 'approved' ? '' : post.review_note,
     board: boardOf(db, post),
     title: post.title,
     content: post.content,
@@ -114,6 +122,8 @@ export function toPostDetail(db: MockDb, post: MockPost): PostDetail {
 export function toComment(db: MockDb, comment: MockComment): Comment {
   return {
     id: comment.id,
+    moderation_status: comment.moderation_status,
+    review_note: comment.moderation_status === 'approved' ? '' : comment.review_note,
     author: toAuthor(db, comment.author_id),
     reply_to: comment.reply_to_user_id === null ? null : toAuthor(db, comment.reply_to_user_id),
     content: comment.content,

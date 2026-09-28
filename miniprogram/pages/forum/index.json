@@ -5,6 +5,7 @@
     "t-tab-panel": "tdesign-miniprogram/tab-panel/tab-panel",
     "t-fab": "tdesign-miniprogram/fab/fab",
     "t-empty": "tdesign-miniprogram/empty/empty",
+    "t-button": "tdesign-miniprogram/button/button",
     "t-loading": "tdesign-miniprogram/loading/loading",
     "post-card": "/components/post-card/index"
   },

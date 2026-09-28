@@ -47,7 +47,7 @@ describe('上传头像', () => {
 describe('注销账号', () => {
   it('之后的当前用户是一个全新的未认证用户', () => {
     call('POST', '/membership/email-code', { email: 'a@student.monash.edu' })
-    call('POST', '/membership/verify', { email: 'a@student.monash.edu', code: '123456' })
+    call('POST', '/membership/applications', { email: 'a@student.monash.edu', code: '123456' })
     call('PUT', '/me', { nickname: '小蒙' })
     const before = call<Me>('GET', '/me')
 
@@ -57,5 +57,7 @@ describe('注销账号', () => {
     expect(after.id).not.toBe(before.id)
     expect(after.nickname).toBe('微信用户')
     expect(after.membership.state).toBe('none')
+    expect(after.membership.application).toBeNull()
+    expect(after.staff_role).toBeNull()
   })
 })

@@ -1,0 +1,71 @@
+<view class="page">
+  <view class="hero">
+    <view class="hero__title">一起把小程序做好</view>
+    <view class="hero__description">欢迎告诉我们你的建议，或使用中遇到的问题。</view>
+  </view>
+  <view wx:if="{{isDemo}}" class="notice"
+    >演示模式：反馈仅临时保存在本次运行中，不会发送给学生会。请勿填写真实联系方式。</view
+  >
+
+  <view wx:if="{{isLocalTest}}" class="notice"
+    >本地联调：反馈保存在这台电脑的测试后台，不会发送给学生会。</view
+  >
+
+  <view wx:if="{{receiptId}}" class="result">
+    <view class="result__title">{{isDemo ? '演示完成，未实际发送' : '反馈提交成功'}}</view>
+    <view class="result__description"
+      >{{isDemo ? '这是反馈流程的演示结果。重新编译后记录会清空，学生会不会收到这条反馈。' :
+      isLocalTest ? '反馈已保存，可在本地管理后台查看与处理。' : '反馈已提交至管理后台。'}}</view
+    >
+    <view class="result__number">{{isDemo ? '演示编号' : '反馈编号'}} #{{receiptId}}</view>
+    <button class="button button--secondary" bindtap="onWriteAgain">继续填写</button>
+  </view>
+
+  <view wx:else class="form">
+    <view class="field__label">反馈类型</view>
+    <view class="categories">
+      <button
+        wx:for="{{categories}}"
+        wx:key="value"
+        class="category {{category === item.value ? 'category--selected' : ''}}"
+        data-value="{{item.value}}"
+        disabled="{{submitting}}"
+        bindtap="onCategoryChange"
+      >
+        {{item.label}}
+      </button>
+    </view>
+
+    <view class="field__label">反馈内容 <text class="field__hint">必填</text></view>
+    <textarea
+      class="content-input"
+      value="{{content}}"
+      maxlength="{{contentMax}}"
+      disabled="{{submitting}}"
+      placeholder="请描述你遇到的问题或建议（至少 10 字）"
+      bindinput="onContentInput"
+      cursor-spacing="24"
+      show-confirm-bar="{{false}}"
+    />
+    <view class="counter">{{content.length}} / {{contentMax}}</view>
+
+    <view class="field__label">联系方式 <text class="field__hint">选填</text></view>
+    <input
+      class="contact-input"
+      value="{{contact}}"
+      maxlength="{{contactMax}}"
+      disabled="{{submitting}}"
+      placeholder="微信号或邮箱，方便后续联系"
+      bindinput="onContactInput"
+      cursor-spacing="24"
+    />
+    <button
+      class="button button--primary"
+      disabled="{{!canSubmit || submitting}}"
+      loading="{{submitting}}"
+      bindtap="onSubmit"
+    >
+      {{submitting ? '正在处理…' : isDemo ? '体验反馈流程' : '提交反馈'}}
+    </button>
+  </view>
+</view>
