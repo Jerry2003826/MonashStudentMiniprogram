@@ -1,0 +1,45 @@
+{% extends 'portal/base.html' %}
+{% block title %}会员申请审核 · 学生会管理后台{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <p class="eyebrow">MEMBERSHIP</p>
+  <h1>会员申请审核</h1>
+  <p class="muted">核对申请信息后，明确选择批准或拒绝。每次显示最近 100 条记录。</p>
+</div>
+<nav class="tabs" aria-label="申请状态">
+  <a class="{% if status == 'pending' %}selected{% endif %}" href="?status=pending">待审核</a>
+  <a class="{% if status == 'approved' %}selected{% endif %}" href="?status=approved">已批准</a>
+  <a class="{% if status == 'rejected' %}selected{% endif %}" href="?status=rejected">已拒绝</a>
+</nav>
+{% for application in applications %}
+<article class="panel application-card">
+  <div class="card-heading">
+    <div><h2>{{ application.user.nickname|default:application.user.username }}</h2><p class="muted">用户 #{{ application.user_id }} · 申请 #{{ application.id }}</p></div>
+    <span class="badge badge-{{ application.status }}">{% if application.status == 'pending' %}待审核{% elif application.status == 'approved' %}已批准{% else %}已拒绝{% endif %}</span>
+  </div>
+  <dl class="facts">
+    <div><dt>学生邮箱</dt><dd>{{ application.email }}</dd></div>
+    <div><dt>提交时间</dt><dd>{{ application.submitted_at|date:'Y-m-d H:i' }}</dd></div>
+  </dl>
+  {% if application.status == 'pending' %}
+  <form class="review-form" method="post" action="{% url 'portal:review' application.id %}">
+    {% csrf_token %}
+    <label for="decision-{{ application.id }}">审核结果</label>
+    <select name="decision" id="decision-{{ application.id }}" required>
+      <option value="" selected disabled>请选择审核结果</option>
+      <option value="approved">批准申请</option>
+      <option value="rejected">拒绝申请</option>
+    </select>
+    <label for="note-{{ application.id }}">审核备注（可选）</label>
+    <textarea id="note-{{ application.id }}" name="note" maxlength="1000" rows="3" placeholder="填写审核说明，最多 1000 字"></textarea>
+    <button class="button" type="submit">确认提交审核结果</button>
+  </form>
+  {% else %}
+  <div class="review-record">
+    <p>审核人：{{ application.reviewer.nickname|default:application.reviewer.username }} · {{ application.reviewed_at|date:'Y-m-d H:i' }}</p>
+    {% if application.review_note %}<p>{{ application.review_note|linebreaksbr }}</p>{% endif %}
+  </div>
+  {% endif %}
+</article>
+{% empty %}<section class="panel empty-state"><h2>暂无此状态的申请</h2><p class="muted">新的会员申请会在这里显示。</p></section>{% endfor %}
+{% endblock %}

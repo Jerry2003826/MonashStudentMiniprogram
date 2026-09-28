@@ -1,0 +1,105 @@
+.page {
+  padding: 24rpx var(--spacing-page) calc(48rpx + env(safe-area-inset-bottom));
+}
+.example-notice {
+  margin-bottom: 20rpx;
+  font-size: 24rpx;
+  color: var(--text-color-secondary);
+  line-height: 1.6;
+}
+.hero {
+  padding: 36rpx;
+  border-radius: var(--radius-card);
+  background: var(--brand-color-light);
+}
+.category {
+  display: inline-block;
+  color: var(--brand-color);
+  font-size: 25rpx;
+  font-weight: 600;
+}
+.title {
+  margin-top: 18rpx;
+  font-size: 42rpx;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: break-word;
+}
+.summary {
+  margin: 18rpx 0 28rpx;
+  color: var(--text-color-secondary);
+  font-size: 27rpx;
+  line-height: 1.7;
+}
+.meta {
+  display: flex;
+  gap: 12rpx;
+  align-items: flex-start;
+  margin-top: 14rpx;
+  font-size: 25rpx;
+  line-height: 1.5;
+  color: var(--text-color-secondary);
+}
+.meta text {
+  flex: 1;
+  min-width: 0;
+}
+.body-card {
+  margin-top: 24rpx;
+  padding: 32rpx;
+  border-radius: var(--radius-card);
+  background: var(--bg-color-card);
+}
+.content {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 29rpx;
+  line-height: 1.9;
+}
+.article-notice {
+  margin: 24rpx 8rpx;
+  color: var(--text-color-secondary);
+  font-size: 25rpx;
+  line-height: 1.7;
+}
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-top: 32rpx;
+}
+.actions button {
+  width: 100%;
+  border-radius: 16rpx;
+  font-size: 29rpx;
+}
+.primary-button {
+  color: #fff;
+  background: var(--brand-color);
+}
+.share-button,
+.retry-button {
+  color: var(--brand-color);
+  background: var(--brand-color-light);
+}
+.actions button::after,
+.retry-button::after,
+.back-button::after {
+  border: none;
+}
+.state {
+  padding: 160rpx var(--spacing-page) 40rpx;
+  text-align: center;
+  color: var(--text-color-secondary);
+  font-size: 28rpx;
+  line-height: 1.6;
+}
+.retry-button,
+.back-button {
+  display: block;
+  margin-top: 24rpx;
+}
+.back-button {
+  color: var(--text-color-secondary);
+  background: var(--bg-color-card);
+}

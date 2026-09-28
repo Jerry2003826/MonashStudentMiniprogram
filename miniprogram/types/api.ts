@@ -33,12 +33,24 @@ export interface Paginated<T> {
 
 export type MembershipState = 'none' | 'active' | 'expired' | 'revoked'
 
+export type StaffRole = 'owner' | 'reviewer' | 'editor'
+
+export interface MembershipApplication {
+  id: number
+  email: string
+  status: 'pending' | 'approved' | 'rejected'
+  submitted_at: string
+  reviewed_at: string | null
+  review_note: string
+}
+
 export interface MembershipInfo {
   state: MembershipState
   member_no: string | null
   email: string | null
   expires_at: string | null
   renewable: boolean
+  application: MembershipApplication | null
 }
 
 export interface Me {
@@ -46,6 +58,7 @@ export interface Me {
   nickname: string
   avatar_url: string | null
   banned_until: string | null
+  staff_role: StaffRole | null
   membership: MembershipInfo
 }
 
@@ -101,6 +114,7 @@ export interface MerchantSummary {
   category: Category
   area: Area
   discount_summary: string
+  is_example?: boolean
 }
 
 export interface MerchantDetail extends MerchantSummary {
@@ -149,7 +163,14 @@ export interface PostImage {
   check_status: ImageCheckStatus
 }
 
-export interface PostSummary {
+export type ModerationStatus = 'pending' | 'approved' | 'rejected'
+
+export interface ModeratedContent {
+  moderation_status: ModerationStatus
+  review_note: string
+}
+
+export interface PostSummary extends ModeratedContent {
   id: number
   board: Board
   title: string
@@ -162,7 +183,7 @@ export interface PostSummary {
   created_at: string
 }
 
-export interface PostDetail {
+export interface PostDetail extends ModeratedContent {
   id: number
   board: Board
   title: string
@@ -184,7 +205,7 @@ export interface PostQuery {
   cursor?: string
 }
 
-export interface Comment {
+export interface Comment extends ModeratedContent {
   id: number
   author: Author
   reply_to: Author | null

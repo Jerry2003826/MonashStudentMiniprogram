@@ -7,6 +7,16 @@
   margin-bottom: 20rpx;
 }
 
+.load-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24rpx;
+  padding: 48rpx 0;
+  color: var(--text-color-secondary);
+  font-size: 28rpx;
+}
+
 .empty {
   padding-top: 120rpx;
 }

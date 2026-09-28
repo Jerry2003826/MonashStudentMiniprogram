@@ -1,11 +1,11 @@
 import { getMerchant } from '../../services/api/merchants'
-import { ensureLogin, fetchMe, isActiveMember } from '../../services/auth'
+import { fetchMe, isActiveMember } from '../../services/auth'
 import { defaultMessage, isApiError, showError } from '../../services/errors'
 import type { MerchantDetail } from '../../types/api'
 import { CARD_URL, VERIFY_URL } from '../../utils/membership'
 
 function actionTextOf(isMember: boolean): string {
-  return isMember ? '出示会员卡' : '认证后享受折扣'
+  return isMember ? '出示会员卡' : '申请会员，审核后可用'
 }
 
 Page({
@@ -14,11 +14,12 @@ Page({
     errorMessage: '',
     isMember: false,
     actionText: actionTextOf(false),
+    testingLabel: '',
   },
 
   async onLoad(query: Record<string, string | undefined>) {
+    this.setData({ testingLabel: getTestingLabel() })
     try {
-      await ensureLogin()
       const merchant = await getMerchant(Number(query.id))
       this.setData({ merchant })
       wx.setNavigationBarTitle({ title: merchant.name })
@@ -73,3 +74,4 @@ Page({
     wx.navigateTo({ url: this.data.isMember ? CARD_URL : VERIFY_URL })
   },
 })
+import { getTestingLabel } from '../../deployment'

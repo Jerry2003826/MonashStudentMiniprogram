@@ -1,0 +1,33 @@
+<view class="page">
+  <view class="hero">
+    <view class="hero__title">学生会小助手</view>
+    <view class="hero__description">校园生活、活动与合作咨询，从这里联系学生会。</view>
+  </view>
+
+  <view wx:if="{{loading}}" class="state">正在加载联系方式…</view>
+  <view wx:elif="{{failed}}" class="state">
+    <view>暂时无法加载联系方式</view>
+    <button class="button button--secondary" bindtap="load">重新加载</button>
+  </view>
+  <block wx:elif="{{support}}">
+    <view class="contact-card">
+      <view class="contact-card__title">小助手微信</view>
+      <block wx:if="{{support.assistant_wechat}}">
+        <text class="contact-card__value" selectable>{{support.assistant_wechat}}</text>
+        <button class="button button--secondary" bindtap="onCopyWechat">复制微信号</button>
+      </block>
+      <view wx:else class="contact-card__description">官方微信号待学生会提供，暂未开放联系。</view>
+    </view>
+    <view class="contact-card">
+      <view class="contact-card__title">学生会官网</view>
+      <block wx:if="{{support.website_url}}">
+        <text class="contact-card__value" selectable>{{support.website_url}}</text>
+        <view class="contact-card__description">复制网址后，可在浏览器中打开。</view>
+        <button class="button button--secondary" bindtap="onCopyWebsite">复制官网地址</button>
+      </block>
+      <view wx:else class="contact-card__description">官方网站待确认，确认后将在这里公布。</view>
+    </view>
+  </block>
+
+  <button class="button button--secondary" bindtap="onFeedback">意见与问题反馈</button>
+</view>

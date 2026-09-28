@@ -1,0 +1,22 @@
+<view wx:if="{{activity}}" class="page">
+  <view wx:if="{{activity.is_example}}" class="example-notice">示例内容 · 仅用于预览，不代表已发布的真实活动。</view>
+  <view class="hero">
+    <view class="category">{{categoryLabel}}</view>
+    <view class="title">{{activity.title}}</view>
+    <view class="summary">{{activity.summary}}</view>
+    <view class="meta"><t-icon name="calendar" size="30rpx" /><text>{{dateText}}</text></view>
+    <view class="meta"><t-icon name="location" size="30rpx" /><text>{{activity.location}}</text></view>
+  </view>
+  <view class="body-card"><text class="content" selectable>{{activity.content}}</text></view>
+  <view wx:if="{{!activity.article_url}}" class="article-notice">公众号原文尚未发布，正式活动安排与参与方式请等待学生会更新。</view>
+  <view class="actions">
+    <button wx:if="{{activity.article_url}}" class="primary-button" bind:tap="onOpenArticle">阅读公众号原文</button>
+    <button class="share-button" open-type="share">分享给朋友</button>
+  </view>
+</view>
+<view wx:elif="{{loading}}" class="state"><t-loading theme="circular" size="48rpx" text="加载中" /></view>
+<view wx:else class="state">
+  <view>{{errorMessage}}</view>
+  <button class="retry-button" size="mini" bind:tap="onRetry">重新加载</button>
+  <button class="back-button" size="mini" bind:tap="onBackToActivities">返回活动页</button>
+</view>

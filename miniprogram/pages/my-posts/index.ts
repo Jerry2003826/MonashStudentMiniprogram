@@ -12,6 +12,7 @@ Page({
     hasMore: true,
     loading: false,
     loaded: false,
+    loadFailed: false,
   },
 
   onLoad() {
@@ -43,7 +44,7 @@ Page({
   },
 
   async fetchPage() {
-    this.setData({ loading: true })
+    this.setData({ loading: true, loadFailed: false })
     try {
       await ensureLogin()
       const page = await listPosts({ author: 'me', cursor: this.data.cursor ?? undefined })
@@ -54,6 +55,7 @@ Page({
         loaded: true,
       })
     } catch (err) {
+      this.setData({ loadFailed: true })
       showError(err)
     } finally {
       this.setData({ loading: false })

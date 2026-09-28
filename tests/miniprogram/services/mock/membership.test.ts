@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { resetDb } from '../../../../miniprogram/services/mock/db'
+import { getDb, resetDb } from '../../../../miniprogram/services/mock/db'
 import type { Me } from '../../../../miniprogram/types/api'
+import { approveMockApplication, rejectMockApplication } from '../../helpers/membership'
 import { call, errorCodeOf } from './call'
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -10,8 +11,14 @@ function sendCode(email = EMAIL): unknown {
   return call('POST', '/membership/email-code', { email })
 }
 
-function verify(code = '123456', email = EMAIL): Me {
-  return call<Me>('POST', '/membership/verify', { email, code })
+function apply(code = '123456', email = EMAIL): Me {
+  return call<Me>('POST', '/membership/applications', { email, code })
+}
+
+function approvedMember(): void {
+  sendCode()
+  apply()
+  approveMockApplication()
 }
 
 beforeEach(() => {
@@ -20,94 +27,156 @@ beforeEach(() => {
   resetDb()
 })
 
-afterEach(() => {
-  vi.useRealTimers()
-})
+afterEach(() => vi.useRealTimers())
 
 describe('发送验证码', () => {
-  it('拒绝不是 @student.monash.edu 的邮箱', () => {
+  it('拒绝非学生邮箱，同一邮箱 60 秒内不能重复发送', () => {
     expect(errorCodeOf(() => sendCode('someone@gmail.com'))).toBe('EMAIL_DOMAIN_NOT_ALLOWED')
-  })
-
-  it('同一邮箱 60 秒内只能发送一次', () => {
     sendCode()
-
     expect(errorCodeOf(() => sendCode())).toBe('RATE_LIMITED')
-
     vi.advanceTimersByTime(61 * 1000)
     expect(() => sendCode()).not.toThrow()
   })
 })
 
-describe('提交验证码', () => {
-  it('没有发送过验证码时提交会失败', () => {
-    expect(errorCodeOf(() => verify())).toBe('CODE_INVALID')
-  })
-
-  it('验证码错误时失败', () => {
+describe('人工审核申请', () => {
+  it('未发送、错误和过期的验证码不能创建申请', () => {
+    expect(errorCodeOf(() => apply())).toBe('CODE_INVALID')
     sendCode()
-
-    expect(errorCodeOf(() => verify('000000'))).toBe('CODE_INVALID')
+    expect(errorCodeOf(() => apply('000000'))).toBe('CODE_INVALID')
+    vi.advanceTimersByTime(11 * 60 * 1000)
+    expect(errorCodeOf(() => apply())).toBe('CODE_INVALID')
+    expect(getDb().application).toBeNull()
   })
 
-  it('验证码正确时成为有效会员，有效期 365 天', () => {
-    sendCode()
-
-    const me = verify()
-
-    expect(me.membership.state).toBe('active')
-    expect(me.membership.member_no).toBe('000123')
-    expect(me.membership.email).toBe(EMAIL)
-    expect(me.membership.renewable).toBe(false)
-    expect(Date.parse(me.membership.expires_at ?? '')).toBe(Date.now() + 365 * DAY_MS)
-  })
-
-  it('邮箱大小写不同也算同一个邮箱', () => {
+  it('正确验证码只创建 pending，不授予会员卡或会员资格', () => {
     sendCode('JLI0001@Student.Monash.edu')
-
-    expect(verify('123456', EMAIL).membership.state).toBe('active')
+    const me = apply()
+    expect(me.membership).toMatchObject({
+      state: 'none',
+      member_no: null,
+      expires_at: null,
+      renewable: false,
+    })
+    expect(me.membership.application).toMatchObject({
+      email: EMAIL,
+      status: 'pending',
+      reviewed_at: null,
+      review_note: '',
+    })
+    expect(getDb().membership).toBeNull()
+    expect(me.staff_role).toBeNull()
   })
 
-  it('距离到期超过 30 天时不能续期', () => {
+  it('待审时禁止重复申请，也不会消耗新验证码或替换待审记录', () => {
     sendCode()
-    verify()
+    const first = apply().membership.application
     vi.advanceTimersByTime(61 * 1000)
     sendCode()
-
-    expect(errorCodeOf(() => verify())).toBe('RENEWAL_NOT_OPEN')
+    expect(errorCodeOf(() => apply())).toBe('VALIDATION_ERROR')
+    expect(getDb().application?.id).toBe(first?.id)
+    expect(getDb().emailCodes[EMAIL].used).toBe(false)
   })
 
-  it('到期前 30 天内可以续期，新到期日在原到期日基础上顺延 365 天', () => {
+  it('待审和被拒绝用户均不能发帖、评论、点赞或上传图片', () => {
     sendCode()
-    const firstExpiry = Date.parse(verify().membership.expires_at ?? '')
+    apply()
+    const protectedActions = [
+      () =>
+        call('POST', '/forum/posts', {
+          board_id: 1,
+          title: '测试',
+          content: '正文',
+          image_ids: [],
+        }),
+      () => call('POST', '/forum/posts/2/comments', { content: '评论' }),
+      () => call('PUT', '/forum/posts/2/like'),
+      () => call('POST', '/forum/images', { file_path: 'wxfile://test.jpg' }),
+    ]
+    for (const action of protectedActions) expect(errorCodeOf(action)).toBe('MEMBERSHIP_REQUIRED')
+    rejectMockApplication()
+    for (const action of protectedActions) expect(errorCodeOf(action)).toBe('MEMBERSHIP_REQUIRED')
+  })
 
+  it('后台拒绝后展示原因，旧验证码不能重用，新验证码可重新申请', () => {
+    sendCode()
+    const firstId = apply().membership.application?.id
+    rejectMockApplication('请提供当前学期的学生信息')
+    const rejected = call<Me>('GET', '/me')
+    expect(rejected.membership.state).toBe('none')
+    expect(rejected.membership.application?.review_note).toBe('请提供当前学期的学生信息')
+    expect(errorCodeOf(() => apply())).toBe('CODE_INVALID')
+    vi.advanceTimersByTime(61 * 1000)
+    sendCode()
+    const reapplied = apply()
+    expect(reapplied.membership.application?.status).toBe('pending')
+    expect(reapplied.membership.application?.id).not.toBe(firstId)
+    expect(reapplied.membership.application?.review_note).toBe('')
+    expect(reapplied.membership.state).toBe('none')
+  })
+
+  it('仅受控后台审核 fixture 批准后，读取到有效资格并获得论坛权限', () => {
+    approvedMember()
+    const me = call<Me>('GET', '/me')
+    expect(me.membership.state).toBe('active')
+    expect(me.membership.application?.status).toBe('approved')
+    expect(Date.parse(me.membership.expires_at!)).toBe(Date.now() + 365 * DAY_MS)
+    expect(() => call('PUT', '/forum/posts/2/like')).not.toThrow()
+    expect(
+      errorCodeOf(() => call('POST', '/membership/verify', { email: EMAIL, code: '123456' })),
+    ).toBe('NOT_FOUND')
+    expect(errorCodeOf(() => call('POST', '/membership/approve', {}))).toBe('NOT_FOUND')
+  })
+
+  it('到期超过 30 天时不能提交续期申请', () => {
+    approvedMember()
+    vi.advanceTimersByTime(61 * 1000)
+    sendCode()
+    expect(errorCodeOf(() => apply())).toBe('RENEWAL_NOT_OPEN')
+  })
+
+  it('续期待审核时保持旧会员卡和到期日，人工通过后才延长', () => {
+    approvedMember()
+    const firstExpiry = getDb().membership!.expires_at
     vi.advanceTimersByTime(340 * DAY_MS)
-    expect(call<Me>('GET', '/me').membership.renewable).toBe(true)
     sendCode()
-    const renewed = verify()
-
-    expect(Date.parse(renewed.membership.expires_at ?? '')).toBe(firstExpiry + 365 * DAY_MS)
+    const pending = apply()
+    expect(pending.membership).toMatchObject({
+      state: 'active',
+      expires_at: firstExpiry,
+      renewable: true,
+    })
+    expect(pending.membership.application?.status).toBe('pending')
+    expect(() => call('PUT', '/forum/posts/2/like')).not.toThrow()
+    approveMockApplication()
+    expect(Date.parse(call<Me>('GET', '/me').membership.expires_at!)).toBe(
+      Date.parse(firstExpiry) + 365 * DAY_MS,
+    )
   })
 
-  it('过期后续期，从续期当天起算 365 天', () => {
-    sendCode()
-    verify()
-
+  it('已过期用户提交续期后仍无权限，批准后才恢复', () => {
+    approvedMember()
     vi.advanceTimersByTime(400 * DAY_MS)
-    expect(call<Me>('GET', '/me').membership.state).toBe('expired')
     sendCode()
-    const renewed = verify()
-
-    expect(renewed.membership.state).toBe('active')
-    expect(Date.parse(renewed.membership.expires_at ?? '')).toBe(Date.now() + 365 * DAY_MS)
+    expect(apply().membership.state).toBe('expired')
+    expect(errorCodeOf(() => call('PUT', '/forum/posts/2/like'))).toBe('MEMBERSHIP_REQUIRED')
+    approveMockApplication()
+    const me = call<Me>('GET', '/me')
+    expect(me.membership.state).toBe('active')
+    expect(Date.parse(me.membership.expires_at!)).toBe(Date.now() + 365 * DAY_MS)
   })
 
-  it('已经用一个邮箱认证过，不能再绑定另一个邮箱', () => {
+  it('被撤销资格无法自行重申请，已归属其他用户的邮箱不能接管', () => {
+    approvedMember()
+    getDb().membership!.revoked = true
+    vi.advanceTimersByTime(61 * 1000)
     sendCode()
-    verify()
-    const other = 'other0002@student.monash.edu'
-    sendCode(other)
-
-    expect(errorCodeOf(() => verify('123456', other))).toBe('ALREADY_MEMBER')
+    expect(errorCodeOf(() => apply())).toBe('MEMBERSHIP_REVOKED')
+    resetDb()
+    getDb().membershipEmailOwners[EMAIL] = 99
+    sendCode()
+    expect(errorCodeOf(() => apply())).toBe('ALREADY_MEMBER')
+    expect(getDb().membershipEmailOwners[EMAIL]).toBe(99)
+    expect(getDb().membership).toBeNull()
   })
 })

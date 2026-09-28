@@ -2,6 +2,20 @@
   <view class="head">
     <t-tag wx:if="{{post.is_pinned}}" size="small" theme="danger" variant="light">置顶</t-tag>
     <t-tag size="small" variant="light" theme="primary">{{post.board.name}}</t-tag>
+    <t-tag
+      wx:if="{{post.moderation_status === 'pending'}}"
+      size="small"
+      theme="warning"
+      variant="light"
+      >待审核</t-tag
+    >
+    <t-tag
+      wx:if="{{post.moderation_status === 'rejected'}}"
+      size="small"
+      theme="danger"
+      variant="light"
+      >未通过</t-tag
+    >
   </view>
   <view class="title">{{post.title}}</view>
   <view class="excerpt">{{post.excerpt}}</view>

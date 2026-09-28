@@ -4,11 +4,10 @@ import type {
   LikeResult,
   Paginated,
   PostDetail,
-  PostImage,
   PostSummary,
   ReportReason,
 } from '../../../types/api'
-import { currentUser, getDb, takeId, type MockDb, type MockImage, type MockPost } from '../db'
+import { currentUser, getDb, takeId, type MockDb, type MockPost } from '../db'
 import {
   assertSafe,
   includesText,
@@ -29,14 +28,16 @@ const COMMENT_PAGE_SIZE = 20
 const TITLE_MAX_LENGTH = 50
 const CONTENT_MAX_LENGTH = 5000
 const COMMENT_MAX_LENGTH = 500
-const MAX_IMAGES = 9
-export const IMAGE_REVIEW_MS = 5000
 const REPORT_REASONS: ReportReason[] = ['ad', 'porn', 'abuse', 'illegal', 'other']
 
 function findPost(db: MockDb, params: Record<string, string>): MockPost {
   const id = paramNumber(params, 'id')
   const post = db.posts.find((item) => item.id === id && !item.deleted)
-  if (!post) throw mockError('NOT_FOUND', '帖子不存在或已被删除')
+  if (
+    !post ||
+    (post.moderation_status !== 'approved' && post.author_id !== db.meId && !contentStaff(db))
+  )
+    throw mockError('NOT_FOUND', '帖子不存在或已被删除')
   return post
 }
 
@@ -58,6 +59,7 @@ function listPosts({ query }: MockRequest): Paginated<PostSummary> {
     .filter(
       (post) =>
         !post.deleted &&
+        (mineOnly ? post.author_id === db.meId : post.moderation_status === 'approved') &&
         (board === undefined || post.board_id === board) &&
         (!mineOnly || post.author_id === db.meId) &&
         (includesText(post.title, keyword) || includesText(post.content, keyword)),
@@ -67,20 +69,18 @@ function listPosts({ query }: MockRequest): Paginated<PostSummary> {
   return { ...page, items: page.items.map((post) => toPostSummary(db, post)) }
 }
 
-function uploadImage({ body }: MockRequest): PostImage {
-  const db = getDb()
-  requireMember(db)
-  const image: MockImage = {
-    id: takeId(db),
-    url: readString(body, 'file_path'),
-    uploader_id: db.meId,
-    check_status: 'pending',
-  }
-  db.images.push(image)
-  setTimeout(() => {
-    image.check_status = 'pass'
-  }, IMAGE_REVIEW_MS)
-  return { id: image.id, url: image.url, check_status: 'pending' }
+function uploadImage(): never {
+  requireMember(getDb())
+  throw mockError('VALIDATION_ERROR', '图片上传暂未开放，请先提交文字内容')
+}
+
+function contentStaff(db: MockDb): boolean {
+  return ['owner', 'editor'].includes(currentUser(db).staff_role ?? '')
+}
+
+function requirePublished(post: MockPost): void {
+  if (post.moderation_status !== 'approved')
+    throw mockError('FORBIDDEN', '内容尚未公开，不能进行此操作')
 }
 
 function createPost({ body }: MockRequest): PostDetail {
@@ -88,7 +88,7 @@ function createPost({ body }: MockRequest): PostDetail {
   requireMember(db)
   const board = db.boards.find((item) => item.id === readNumber(body, 'board_id'))
   if (!board) throw mockError('VALIDATION_ERROR', '请选择板块')
-  if (board.staff_only && !currentUser(db).is_staff) {
+  if (board.staff_only && !['owner', 'editor'].includes(currentUser(db).staff_role ?? '')) {
     throw mockError('FORBIDDEN', '「官方公告」只有学生会干事可以发帖')
   }
 
@@ -101,12 +101,7 @@ function createPost({ body }: MockRequest): PostDetail {
   if (content.length === 0 || content.length > CONTENT_MAX_LENGTH) {
     throw mockError('VALIDATION_ERROR', `正文需要 1 到 ${CONTENT_MAX_LENGTH} 个字`)
   }
-  const ownImages = imageIds.every((id) =>
-    db.images.some((image) => image.id === id && image.uploader_id === db.meId),
-  )
-  if (imageIds.length > MAX_IMAGES || !ownImages) {
-    throw mockError('VALIDATION_ERROR', `最多上传 ${MAX_IMAGES} 张图片`)
-  }
+  if (imageIds.length) throw mockError('VALIDATION_ERROR', '图片上传暂未开放，请先提交文字内容')
   assertSafe(title, content)
 
   const post: MockPost = {
@@ -115,6 +110,8 @@ function createPost({ body }: MockRequest): PostDetail {
     author_id: db.meId,
     title,
     content,
+    moderation_status: 'pending',
+    review_note: '',
     image_ids: imageIds,
     like_count: 0,
     is_pinned: false,
@@ -133,7 +130,8 @@ function getPost({ params }: MockRequest): PostDetail {
 function deletePost({ params }: MockRequest): null {
   const db = getDb()
   const post = findPost(db, params)
-  if (post.author_id !== db.meId) throw mockError('FORBIDDEN', '只能删除自己的帖子')
+  if (post.author_id !== db.meId && !contentStaff(db))
+    throw mockError('FORBIDDEN', '只能删除自己的帖子')
   post.deleted = true
   return null
 }
@@ -142,7 +140,14 @@ function listComments({ params, query }: MockRequest): Paginated<Comment> {
   const db = getDb()
   const post = findPost(db, params)
   const comments = db.comments
-    .filter((comment) => comment.post_id === post.id && !comment.deleted)
+    .filter(
+      (comment) =>
+        comment.post_id === post.id &&
+        !comment.deleted &&
+        (comment.moderation_status === 'approved' ||
+          comment.author_id === db.meId ||
+          contentStaff(db)),
+    )
     .sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at))
   const page = paginate(comments, query.cursor, COMMENT_PAGE_SIZE)
   return { ...page, items: page.items.map((comment) => toComment(db, comment)) }
@@ -152,18 +157,33 @@ function createComment({ params, body }: MockRequest): Comment {
   const db = getDb()
   requireMember(db)
   const post = findPost(db, params)
+  requirePublished(post)
   const content = readString(body, 'content').trim()
   if (content.length === 0 || content.length > COMMENT_MAX_LENGTH) {
     throw mockError('VALIDATION_ERROR', `评论需要 1 到 ${COMMENT_MAX_LENGTH} 个字`)
   }
   assertSafe(content)
   const replyTo = readNumber(body, 'reply_to_user_id')
+  if (
+    replyTo !== undefined &&
+    replyTo !== post.author_id &&
+    !db.comments.some(
+      (item) =>
+        item.post_id === post.id &&
+        !item.deleted &&
+        item.moderation_status === 'approved' &&
+        item.author_id === replyTo,
+    )
+  )
+    throw mockError('VALIDATION_ERROR', '回复对象不在本帖中')
   const comment = {
     id: takeId(db),
     post_id: post.id,
     author_id: db.meId,
     reply_to_user_id: replyTo ?? null,
     content,
+    moderation_status: 'pending' as const,
+    review_note: '',
     created_at: new Date().toISOString(),
     deleted: false,
   }
@@ -176,7 +196,8 @@ function deleteComment({ params }: MockRequest): null {
   const id = paramNumber(params, 'id')
   const comment = db.comments.find((item) => item.id === id && !item.deleted)
   if (!comment) throw mockError('NOT_FOUND', '评论不存在或已被删除')
-  if (comment.author_id !== db.meId) throw mockError('FORBIDDEN', '只能删除自己的评论')
+  if (comment.author_id !== db.meId && !contentStaff(db))
+    throw mockError('FORBIDDEN', '只能删除自己的评论')
   comment.deleted = true
   return null
 }
@@ -185,6 +206,7 @@ function setLiked(req: MockRequest, liked: boolean): LikeResult {
   const db = getDb()
   requireMember(db)
   const post = findPost(db, req.params)
+  requirePublished(post)
   const already = db.likedPostIds.includes(post.id)
   if (liked && !already) {
     db.likedPostIds.push(post.id)
@@ -208,9 +230,26 @@ function createReport({ body }: MockRequest): null {
   }
   const exists =
     targetType === 'post'
-      ? db.posts.some((post) => post.id === targetId && !post.deleted)
-      : db.comments.some((comment) => comment.id === targetId && !comment.deleted)
+      ? db.posts.some(
+          (post) => post.id === targetId && !post.deleted && post.moderation_status === 'approved',
+        )
+      : db.comments.some(
+          (comment) =>
+            comment.id === targetId &&
+            !comment.deleted &&
+            comment.moderation_status === 'approved' &&
+            db.posts.some(
+              (post) =>
+                post.id === comment.post_id &&
+                !post.deleted &&
+                post.moderation_status === 'approved',
+            ),
+        )
   if (!exists) throw mockError('NOT_FOUND', '举报的内容不存在或已被删除')
+  if (
+    db.reports.some((report) => report.target_type === targetType && report.target_id === targetId)
+  )
+    return null
   db.reports.push({
     target_type: targetType,
     target_id: targetId,

@@ -29,19 +29,11 @@
       autosize="{{ { minHeight: 240 } }}"
       bind:change="onContentChange"
     />
-    <view class="upload">
-      <t-upload
-        files="{{files}}"
-        max="{{9}}"
-        media-type="{{['image']}}"
-        config="{{ { sizeType: ['compressed'] } }}"
-        bind:add="onAddImages"
-        bind:remove="onRemoveImage"
-      />
-    </view>
   </view>
 
-  <view class="rules">发布前内容会经过安全检测，请遵守论坛规则，不要发布广告和违规信息。</view>
+  <view class="rules"
+    >帖子提交后由管理员人工审核，通过后公开。当前支持文字，图片上传暂未开放。请勿发布广告或违规信息。</view
+  >
 
   <view class="action-bar">
     <t-button
@@ -52,7 +44,7 @@
       disabled="{{!canSubmit}}"
       bind:tap="onSubmit"
     >
-      发布
+      提交审核
     </t-button>
   </view>
 </view>

@@ -1,0 +1,4 @@
+{
+  "navigationBarTitleText": "确认后台登录",
+  "usingComponents": { "t-icon": "tdesign-miniprogram/icon/icon" }
+}

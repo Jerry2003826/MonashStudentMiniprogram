@@ -1,0 +1,8 @@
+{% extends 'portal/base.html' %}
+{% block title %}内容管理 · 学生会管理后台{% endblock %}
+{% block content %}
+<div class="page-heading"><p class="eyebrow">CONTENT STUDIO</p><h1>内容管理</h1><p class="muted">先保存草稿，核对后再发布。下架保留原始记录，后续可以继续编辑。</p></div>
+<div class="resource-grid">
+{% for item in resources %}<a class="panel resource-card" href="{% url 'portal:content_list' item.resource.key %}"><div class="resource-count">{{ item.count }} 条记录</div><h2>{{ item.resource.title }}</h2><p class="muted">{{ item.resource.description }}</p><span class="resource-link">{% if item.resource.singleton %}编辑设置{% else %}进入管理{% endif %} →</span></a>{% endfor %}
+</div>
+{% endblock %}

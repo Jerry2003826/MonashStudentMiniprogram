@@ -5,6 +5,9 @@ import type {
   Category,
   CreateReportBody,
   ImageCheckStatus,
+  MembershipApplication,
+  ModeratedContent,
+  StaffRole,
 } from '../../types/api'
 import { createSeed } from './seed'
 
@@ -13,7 +16,7 @@ export interface MockUser {
   nickname: string
   avatar_url: string | null
   banned_until: string | null
-  is_staff: boolean
+  staff_role: StaffRole | null
 }
 
 export interface MockMembership {
@@ -54,7 +57,7 @@ export interface MockImage {
   check_status: ImageCheckStatus
 }
 
-export interface MockPost {
+export interface MockPost extends ModeratedContent {
   id: number
   board_id: number
   author_id: number
@@ -67,7 +70,7 @@ export interface MockPost {
   deleted: boolean
 }
 
-export interface MockComment {
+export interface MockComment extends ModeratedContent {
   id: number
   post_id: number
   author_id: number
@@ -81,6 +84,9 @@ export interface MockDb {
   meId: number
   users: MockUser[]
   membership: MockMembership | null
+  application: MembershipApplication | null
+  membershipEmailOwners: Record<string, number>
+  staffLoginChallenges: Record<string, { expires_at: number; confirmed_by: number | null }>
   emailCodes: Record<string, MockEmailCode>
   banners: Banner[]
   categories: Category[]
@@ -101,7 +107,7 @@ export const DELETED_NICKNAME = '已注销用户'
 const ME_ID = 1
 
 export function createUser(id: number): MockUser {
-  return { id, nickname: DEFAULT_NICKNAME, avatar_url: null, banned_until: null, is_staff: false }
+  return { id, nickname: DEFAULT_NICKNAME, avatar_url: null, banned_until: null, staff_role: null }
 }
 
 function createDb(): MockDb {
@@ -110,6 +116,9 @@ function createDb(): MockDb {
     meId: ME_ID,
     users: [createUser(ME_ID), ...seed.users],
     membership: null,
+    application: null,
+    membershipEmailOwners: {},
+    staffLoginChallenges: {},
     emailCodes: {},
     banners: seed.banners,
     categories: seed.categories,

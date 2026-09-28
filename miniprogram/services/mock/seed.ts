@@ -29,36 +29,36 @@ const users: MockUser[] = [
     nickname: '学生会官方',
     avatar_url: photo('avatar-official', 120, 120),
     banned_until: null,
-    is_staff: true,
+    staff_role: 'editor',
   },
   {
     id: 3,
     nickname: 'Clayton 搬砖人',
     avatar_url: photo('avatar-3', 120, 120),
     banned_until: null,
-    is_staff: false,
+    staff_role: null,
   },
   {
     id: 4,
     nickname: '奶茶续命中',
     avatar_url: photo('avatar-4', 120, 120),
     banned_until: null,
-    is_staff: false,
+    staff_role: null,
   },
-  { id: 5, nickname: '期末求放过', avatar_url: null, banned_until: null, is_staff: false },
+  { id: 5, nickname: '期末求放过', avatar_url: null, banned_until: null, staff_role: null },
   {
     id: 6,
     nickname: '租房小能手',
     avatar_url: photo('avatar-6', 120, 120),
     banned_until: null,
-    is_staff: false,
+    staff_role: null,
   },
   {
     id: 7,
     nickname: '一只考拉',
     avatar_url: photo('avatar-7', 120, 120),
     banned_until: null,
-    is_staff: false,
+    staff_role: null,
   },
 ]
 
@@ -239,7 +239,7 @@ const postSeeds: PostSeed[] = [
     author_id: 2,
     title: '学生会小程序内测说明',
     content:
-      '欢迎体验蒙纳士中国学生会小程序！\n\n现在还在内测阶段，页面上的商家和帖子都是示例数据。\n\n你可以试试：\n1. 在「我的」里完成学生认证（示例验证码是 123456）\n2. 出示电子会员卡\n3. 在论坛发帖、评论和点赞\n\n有任何建议，欢迎在帖子下面留言。',
+      '欢迎体验蒙纳士中国学生会小程序！\n\n页面上的活动、商家和帖子都是示例数据。\n\n你可以浏览内容，并在「我的」里提交会员申请（演示验证码为 123456）。申请提交后需要人工审核，通过后才可使用会员卡、发帖、评论和点赞。\n\n开发演示不会发送邮件，也不会自动批准申请；正式审核由学生会后台处理。',
     image_count: 0,
     like_count: 56,
     is_pinned: true,
@@ -473,10 +473,19 @@ export function createSeed(now: number): Seed {
       })
       return id
     })
-    return { ...post, image_ids: imageIds, created_at: iso(ago_ms), deleted: false }
+    return {
+      ...post,
+      image_ids: imageIds,
+      created_at: iso(ago_ms),
+      deleted: false,
+      moderation_status: 'approved',
+      review_note: '',
+    }
   })
   const comments: MockComment[] = commentSeeds.map(({ ago_ms, ...comment }, index) => ({
     ...comment,
+    moderation_status: 'approved',
+    review_note: '',
     id: index + 1,
     created_at: iso(ago_ms),
     deleted: false,

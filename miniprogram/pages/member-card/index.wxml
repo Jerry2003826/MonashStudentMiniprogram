@@ -1,46 +1,57 @@
 <view class="page">
-  <view
-    wx:if="{{card.variant !== 'empty'}}"
-    class="member-card {{card.variant === 'active' ? 'member-card--active' : 'member-card--inactive'}}"
+  <view wx:if="{{demo}}" class="hint">演示会员卡，仅用于本地测试，不可用于真实优惠。</view>
+  <view wx:elif="{{testingLabel}}" class="hint"
+    >内测会员卡，仅供功能测试，不作为正式会员优惠凭证。</view
   >
-    <view wx:if="{{card.variant === 'active'}}" class="member-card__shine" />
-    <view class="member-card__top">
-      <view class="member-card__org">蒙纳士中国学生会</view>
-      <view class="member-card__badge">{{card.badge}}</view>
+  <view wx:if="{{loading}}" class="hint">正在核验会员资格…</view>
+  <view wx:elif="{{loadFailed}}" class="hint">
+    <view>暂时无法核验会员资格，请重新加载后出示会员卡。</view>
+    <t-button theme="primary" block bind:tap="onShow">重新加载</t-button>
+  </view>
+  <block wx:else>
+    <view
+      wx:if="{{card.variant !== 'empty'}}"
+      class="member-card {{card.variant === 'active' ? 'member-card--active' : 'member-card--inactive'}}"
+    >
+      <view wx:if="{{card.variant === 'active'}}" class="member-card__shine" />
+      <view class="member-card__top">
+        <view class="member-card__org">蒙纳士中国学生会</view>
+        <view class="member-card__badge">{{card.badge}}</view>
+      </view>
+
+      <view class="member-card__user">
+        <image
+          wx:if="{{me.avatar_url}}"
+          class="member-card__avatar"
+          src="{{me.avatar_url}}"
+          mode="aspectFill"
+        />
+        <view wx:else class="member-card__avatar member-card__avatar--placeholder">
+          <t-icon name="user" size="48rpx" />
+        </view>
+        <view>
+          <view class="member-card__name">{{me.nickname}}</view>
+          <view class="member-card__no">No. {{me.membership.member_no}}</view>
+        </view>
+      </view>
+
+      <view class="member-card__bottom">
+        <view>有效期至 {{expiry}}</view>
+        <view class="member-card__clock">
+          <view wx:if="{{card.variant === 'active'}}" class="live-dot" />
+          <text>{{today}} {{clock}}</text>
+        </view>
+      </view>
     </view>
 
-    <view class="member-card__user">
-      <image
-        wx:if="{{me.avatar_url}}"
-        class="member-card__avatar"
-        src="{{me.avatar_url}}"
-        mode="aspectFill"
-      />
-      <view wx:else class="member-card__avatar member-card__avatar--placeholder">
-        <t-icon name="user" size="48rpx" />
-      </view>
-      <view>
-        <view class="member-card__name">{{me.nickname}}</view>
-        <view class="member-card__no">No. {{me.membership.member_no}}</view>
-      </view>
+    <view wx:else class="empty">
+      <t-icon name="card" size="96rpx" />
+      <view class="empty__title">{{card.badge}}</view>
     </view>
 
-    <view class="member-card__bottom">
-      <view>有效期至 {{expiry}}</view>
-      <view class="member-card__clock">
-        <view wx:if="{{card.variant === 'active'}}" class="live-dot" />
-        <text>{{today}} {{clock}}</text>
-      </view>
+    <view class="hint">{{card.hint}}</view>
+    <view wx:if="{{card.action}}" class="action">
+      <t-button theme="primary" size="large" block bind:tap="onAction">{{card.action}}</t-button>
     </view>
-  </view>
-
-  <view wx:else class="empty">
-    <t-icon name="card" size="96rpx" />
-    <view class="empty__title">你还不是会员</view>
-  </view>
-
-  <view class="hint">{{card.hint}}</view>
-  <view wx:if="{{card.action}}" class="action">
-    <t-button theme="primary" size="large" block bind:tap="onAction">{{card.action}}</t-button>
-  </view>
+  </block>
 </view>

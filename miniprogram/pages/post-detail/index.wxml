@@ -5,6 +5,13 @@
       <t-tag size="small" variant="light" theme="primary">{{post.board.name}}</t-tag>
     </view>
     <view class="title">{{post.title}}</view>
+    <view wx:if="{{post.moderation_status !== 'approved'}}" class="moderation-notice">
+      <text
+        >{{post.moderation_status === 'pending' ? '待人工审核，通过后公开展示' :
+        '审核未通过'}}</text
+      >
+      <view wx:if="{{post.review_note}}">{{post.review_note}}</view>
+    </view>
 
     <view class="author">
       <image wx:if="{{post.author.avatar_url}}" class="avatar" src="{{post.author.avatar_url}}" />
@@ -35,7 +42,7 @@
       </view>
     </view>
 
-    <view class="actions">
+    <view wx:if="{{post.moderation_status === 'approved'}}" class="actions">
       <view class="action {{post.liked ? 'action--active' : ''}}" bind:tap="onToggleLike">
         <t-icon name="{{post.liked ? 'thumb-up-filled' : 'thumb-up'}}" size="36rpx" />
         <text>{{post.like_count}}</text>
@@ -47,7 +54,7 @@
     </view>
   </view>
 
-  <view class="card comments">
+  <view wx:if="{{post.moderation_status === 'approved'}}" class="card comments">
     <view class="comments__title">评论 {{post.comment_count}}</view>
     <view
       wx:for="{{comments}}"
@@ -58,7 +65,11 @@
       bind:tap="onReplyComment"
       bind:longpress="onCommentActions"
     >
-      <image wx:if="{{item.author.avatar_url}}" class="comment__avatar" src="{{item.author.avatar_url}}" />
+      <image
+        wx:if="{{item.author.avatar_url}}"
+        class="comment__avatar"
+        src="{{item.author.avatar_url}}"
+      />
       <view wx:else class="comment__avatar avatar--placeholder">
         <t-icon name="user" size="24rpx" />
       </view>
@@ -68,8 +79,14 @@
           <text class="comment__time">{{item.timeText}}</text>
         </view>
         <view class="comment__content">
-          <text wx:if="{{item.reply_to}}" class="comment__reply">回复 @{{item.reply_to.nickname}}：</text>
+          <text wx:if="{{item.reply_to}}" class="comment__reply"
+            >回复 @{{item.reply_to.nickname}}：</text
+          >
           <text>{{item.content}}</text>
+          <view wx:if="{{item.moderation_status !== 'approved'}}" class="moderation-notice">
+            {{item.moderation_status === 'pending' ? '评论待审核，暂未公开' : '评论未通过审核'}}
+            <view wx:if="{{item.review_note}}">{{item.review_note}}</view>
+          </view>
         </view>
       </view>
     </view>
@@ -81,7 +98,7 @@
     </view>
   </view>
 
-  <view class="input-bar">
+  <view wx:if="{{post.moderation_status === 'approved'}}" class="input-bar">
     <view wx:if="{{replyTo}}" class="reply-hint">
       <text>回复 @{{replyTo.nickname}}</text>
       <view class="reply-hint__cancel" bind:tap="onCancelReply">
@@ -105,7 +122,12 @@
   </view>
 </view>
 
-<t-empty wx:elif="{{errorMessage}}" class="state" icon="info-circle" description="{{errorMessage}}" />
+<t-empty
+  wx:elif="{{errorMessage}}"
+  class="state"
+  icon="info-circle"
+  description="{{errorMessage}}"
+/>
 
 <view wx:else class="state">
   <t-loading theme="circular" size="48rpx" />

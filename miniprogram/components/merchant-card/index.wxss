@@ -35,6 +35,13 @@
   margin-bottom: 12rpx;
 }
 
+.distance {
+  margin-bottom: 12rpx;
+  color: var(--brand-color);
+  font-size: 24rpx;
+  font-weight: 500;
+}
+
 .discount {
   display: flex;
   align-items: center;

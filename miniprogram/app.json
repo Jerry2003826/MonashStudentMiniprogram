@@ -1,13 +1,19 @@
 {
   "pages": [
     "pages/home/index",
-    "pages/merchants/index",
     "pages/forum/index",
+    "pages/activities/index",
+    "pages/merchants/index",
     "pages/profile/index",
+    "pages/activity-detail/index",
+    "pages/handbook/index",
+    "pages/contact/index",
+    "pages/feedback/index",
     "pages/merchant-detail/index",
     "pages/about/index",
     "pages/agreement/index",
     "pages/verify/index",
+    "pages/staff-login/index",
     "pages/member-card/index",
     "pages/post-create/index",
     "pages/post-detail/index",
@@ -17,17 +23,24 @@
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "蒙纳士中国学生会",
     "navigationBarBackgroundColor": "#ffffff",
-    "backgroundColor": "#f5f6f8"
+    "backgroundColor": "#fff7f8"
   },
   "tabBar": {
     "custom": true,
     "list": [
       { "pagePath": "pages/home/index", "text": "首页" },
-      { "pagePath": "pages/merchants/index", "text": "商家" },
       { "pagePath": "pages/forum/index", "text": "论坛" },
+      { "pagePath": "pages/activities/index", "text": "活动" },
+      { "pagePath": "pages/merchants/index", "text": "优惠" },
       { "pagePath": "pages/profile/index", "text": "我的" }
     ]
   },
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于在你主动查看附近优惠时计算你与商家的直线距离"
+    }
+  },
+  "requiredPrivateInfos": ["getLocation"],
   "componentFramework": "glass-easel",
   "sitemapLocation": "sitemap.json",
   "lazyCodeLoading": "requiredComponents"

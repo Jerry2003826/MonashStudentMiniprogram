@@ -1,0 +1,17 @@
+{% extends 'portal/base.html' %}
+{% block content %}
+<div class="page-heading">
+  <p class="eyebrow">WORKSPACE</p>
+  <h1>欢迎回来</h1>
+  <p class="muted">选择一项工作开始。这里仅显示当前角色可使用的功能。</p>
+</div>
+<div class="resource-grid">
+{% if staff.role == 'owner' or staff.role == 'reviewer' %}<a class="panel resource-card" href="{% url 'portal:applications' %}"><h2>会员申请审核</h2><p class="muted">核对学生资料，批准或拒绝会员申请。</p><span class="resource-link">进入审核 →</span></a>{% endif %}
+{% if staff.role == 'owner' %}<a class="panel resource-card" href="{% url 'portal:accounts' %}"><h2>管理员账号</h2><p class="muted">为微信用户分配角色，调整权限与启用状态。</p><span class="resource-link">管理账号 →</span></a>{% endif %}
+{% if staff.role == 'owner' or staff.role == 'editor' %}
+<a class="panel resource-card" href="{% url 'portal:content_index' %}"><h2>内容管理</h2><p class="muted">维护活动、商家、首页轮播、新生手册与联系信息。</p><span class="resource-link">编辑内容 →</span></a>
+<a class="panel resource-card" href="{% url 'portal:forum' %}"><h2>论坛审核</h2><p class="muted">审核帖子与评论，管理置顶，处理内容举报。</p><span class="resource-link">进入审核 →</span></a>
+<a class="panel resource-card" href="{% url 'portal:feedback' %}"><h2>用户反馈</h2><p class="muted">查看用户的问题与建议，记录处理结果。</p><span class="resource-link">处理反馈 →</span></a>
+{% endif %}
+</div>
+{% endblock %}

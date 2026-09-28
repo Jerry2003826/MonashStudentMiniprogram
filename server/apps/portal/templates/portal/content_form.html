@@ -1,0 +1,6 @@
+{% extends 'portal/base.html' %}
+{% block title %}{% if record %}编辑{% else %}新增{% endif %}{{ resource.title }} · 内容管理{% endblock %}
+{% block content %}
+<div class="page-heading"><a class="back-link" href="{% if resource.singleton %}{% url 'portal:content_index' %}{% else %}{% url 'portal:content_list' resource.key %}{% endif %}">← 返回{{ resource.title }}</a><h1>{% if record %}编辑{% else %}新增{% endif %}{{ resource.title }}</h1><p class="muted">{{ resource.description }}{% if resource.publishable %} 勾选发布状态后保存，会立即在小程序公开。{% endif %}</p></div>
+<form method="post" class="panel content-editor">{% csrf_token %}{% include 'portal/form_fields.html' %}<div class="editor-actions"><button class="button" type="submit">保存{% if resource.singleton %}设置{% else %}内容{% endif %}</button><a href="{% if resource.singleton %}{% url 'portal:content_index' %}{% else %}{% url 'portal:content_list' resource.key %}{% endif %}" class="button button-quiet">返回列表</a></div></form>
+{% endblock %}

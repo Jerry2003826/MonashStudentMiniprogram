@@ -1,5 +1,7 @@
 <view class="page">
-  <view class="notice">示例文字，正式内容由学生会提供</view>
+  <view class="notice"
+    >{{testingLabel ? '内测版 · 功能与内容正在邀请测试中' : '学生服务与校园交流'}}</view
+  >
 
   <view class="card intro">
     <view class="intro__logo">
@@ -7,22 +9,19 @@
     </view>
     <view class="intro__name">蒙纳士中国学生会</view>
     <view class="intro__text">
-      我们是由 Monash University 中国留学生组成的学生组织，希望帮助同学们更好地适应海外学习和生活：组织迎新和节日活动，联系周边商家为会员争取折扣，也为大家提供一个交流互助的社区。
+      我们是由 Monash University
+      中国留学生组成的学生组织，希望帮助同学们更好地适应海外学习和生活：组织迎新和节日活动，联系周边商家为会员争取折扣，也为大家提供一个交流互助的社区。
     </view>
   </view>
 
   <view class="group">
     <t-cell-group theme="card" title="小程序能做什么">
       <t-cell
-        title="学生认证"
-        description="验证 Monash 学生邮箱，免费成为会员"
+        title="会员申请"
+        description="验证 Monash 学生邮箱并提交申请，人工审核通过后可用"
         left-icon="secured"
       />
-      <t-cell
-        title="合作商家"
-        description="查看会员折扣，到店出示电子会员卡"
-        left-icon="shop"
-      />
+      <t-cell title="合作商家" description="查看会员折扣，到店出示电子会员卡" left-icon="shop" />
       <t-cell
         title="论坛"
         description="二手、租房、学习、求助，同学之间互相帮忙"
@@ -33,6 +32,13 @@
 
   <view class="group">
     <t-cell-group theme="card">
+      <t-cell
+        title="学联官网"
+        note="{{supportError ? '加载失败，点击重试' : websiteUrl ? '复制地址' : '地址待公布'}}"
+        arrow
+        hover
+        bind:click="onWebsite"
+      />
       <t-cell title="版本" note="{{version}}" />
     </t-cell-group>
   </view>

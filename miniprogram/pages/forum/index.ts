@@ -1,5 +1,4 @@
 import { listBoards, listPosts } from '../../services/api/forum'
-import { ensureLogin } from '../../services/auth'
 import { showError } from '../../services/errors'
 import type { Board, PostSummary } from '../../types/api'
 import { ensureMember } from '../../utils/guard'
@@ -18,6 +17,7 @@ Page({
     hasMore: true,
     loading: false,
     loaded: false,
+    loadFailed: false,
   },
 
   // 切换板块太快时，只保留最后一次请求的结果
@@ -25,7 +25,6 @@ Page({
 
   async onLoad() {
     try {
-      await ensureLogin()
       this.setData({ boards: await listBoards() })
     } catch (err) {
       showError(err)
@@ -57,12 +56,24 @@ Page({
     await this.fetchPage()
   },
 
+  async onRetry() {
+    if (this.data.loading) return
+    // 板块与帖子可能分别加载失败，重试时也恢复板块导航。
+    if (!this.data.boards.length) {
+      try {
+        this.setData({ boards: await listBoards() })
+      } catch {
+        // 帖子接口会提供持续可见的失败状态，板块失败不阻断公开帖子。
+      }
+    }
+    await this.loadMore()
+  },
+
   async fetchPage() {
     this.requestSeq += 1
     const seq = this.requestSeq
-    this.setData({ loading: true })
+    this.setData({ loading: true, loadFailed: false })
     try {
-      await ensureLogin()
       const { board, keyword, cursor } = this.data
       const page = await listPosts({
         board: board || undefined,
@@ -77,7 +88,10 @@ Page({
         loaded: true,
       })
     } catch (err) {
-      if (seq === this.requestSeq) showError(err)
+      if (seq === this.requestSeq) {
+        this.setData({ loadFailed: true })
+        showError(err)
+      }
     } finally {
       if (seq === this.requestSeq) this.setData({ loading: false })
     }

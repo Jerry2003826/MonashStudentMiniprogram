@@ -1,15 +1,16 @@
 @import './styles/icon-font.wxss';
 
 page {
-  /* 学生会的视觉规范到位前，品牌色先用蓝色系占位 */
-  --brand-color: #006dae;
-  --brand-color-light: #e6f1f8;
-  --brand-color-focus: #cce2ef;
-  --brand-color-disabled: #80b6d6;
-  --brand-color-active: #005a8f;
+  /* 工作规划指定红白或粉色，正式品牌素材由学生会提供。 */
+  --brand-color: #b52f50;
+  --brand-color-light: #fff0f3;
+  --brand-color-focus: #f7d4df;
+  --brand-color-disabled: #dfa1b1;
+  --brand-color-active: #92213f;
+  --brand-gradient: linear-gradient(135deg, #b52f50, #d85e7b);
 
   --discount-color: #e37318;
-  --bg-color-page: #f5f6f8;
+  --bg-color-page: #fff7f8;
   --bg-color-card: #ffffff;
   --text-color-primary: rgba(0, 0, 0, 0.9);
   --text-color-secondary: rgba(0, 0, 0, 0.6);

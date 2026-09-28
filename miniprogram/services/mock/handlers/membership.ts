@@ -1,12 +1,11 @@
 import { MOCK_VERIFICATION_CODE } from '../../../config'
 import type { Me } from '../../../types/api'
 import { isStudentEmail, normalizeEmail } from '../../../utils/validate'
-import { getDb } from '../db'
+import { getDb, takeId } from '../db'
 import { mockError, readString } from '../helpers'
 import type { MockRequest, MockRoute } from '../router'
-import { buildMe, DAY_MS, MEMBERSHIP_DAYS, RENEW_WINDOW_DAYS } from './me'
+import { buildMe, DAY_MS, RENEW_WINDOW_DAYS } from './me'
 
-const MOCK_MEMBER_NO = '000123'
 const RESEND_COOLDOWN_MS = 60 * 1000
 const CODE_TTL_MS = 10 * 60 * 1000
 
@@ -27,10 +26,21 @@ function sendEmailCode({ body }: MockRequest): null {
   return null
 }
 
-function verifyEmail({ body }: MockRequest): Me {
+function submitApplication({ body }: MockRequest): Me {
   const email = readEmail(body)
   const db = getDb()
   const now = Date.now()
+  const emailOwner = db.membershipEmailOwners[email]
+  if (emailOwner !== undefined && emailOwner !== db.meId) throw mockError('ALREADY_MEMBER')
+  if (db.application?.status === 'pending') {
+    throw mockError('VALIDATION_ERROR', '你的申请正在审核中，请勿重复提交')
+  }
+  const current = db.membership
+  if (current?.revoked) throw mockError('MEMBERSHIP_REVOKED')
+  if (current && current.email !== email) throw mockError('ALREADY_MEMBER')
+  if (current && Date.parse(current.expires_at) - now > RENEW_WINDOW_DAYS * DAY_MS) {
+    throw mockError('RENEWAL_NOT_OPEN')
+  }
   const sent = db.emailCodes[email]
   const codeValid =
     sent !== undefined &&
@@ -40,26 +50,19 @@ function verifyEmail({ body }: MockRequest): Me {
   if (!codeValid) throw mockError('CODE_INVALID')
   sent.used = true
 
-  const current = db.membership
-  if (current?.revoked) throw mockError('MEMBERSHIP_REVOKED')
-  if (current && current.email !== email) throw mockError('ALREADY_MEMBER')
-
-  if (current) {
-    const expiresAt = Date.parse(current.expires_at)
-    if (expiresAt - now > RENEW_WINDOW_DAYS * DAY_MS) throw mockError('RENEWAL_NOT_OPEN')
-    current.expires_at = new Date(Math.max(expiresAt, now) + MEMBERSHIP_DAYS * DAY_MS).toISOString()
-  } else {
-    db.membership = {
-      email,
-      member_no: MOCK_MEMBER_NO,
-      expires_at: new Date(now + MEMBERSHIP_DAYS * DAY_MS).toISOString(),
-      revoked: false,
-    }
+  // 邮箱验证只证明邮箱归属；会员资格只能由后台人工审核授予。
+  db.application = {
+    id: takeId(db),
+    email,
+    status: 'pending',
+    submitted_at: new Date(now).toISOString(),
+    reviewed_at: null,
+    review_note: '',
   }
   return buildMe(db)
 }
 
 export const membershipRoutes: MockRoute[] = [
   { method: 'POST', pattern: '/membership/email-code', handler: sendEmailCode },
-  { method: 'POST', pattern: '/membership/verify', handler: verifyEmail },
+  { method: 'POST', pattern: '/membership/applications', handler: submitApplication },
 ]

@@ -1,0 +1,7 @@
+{% extends 'portal/base.html' %}
+{% block title %}处理反馈 #{{ record.id }} · 学生会管理后台{% endblock %}
+{% block content %}
+<div class="page-heading"><a href="{% url 'portal:feedback' %}">← 返回反馈列表</a><h1>处理反馈 #{{ record.id }}</h1></div>
+<section class="panel"><h2>{{ record.get_category_display }}</h2><p class="muted">{{ record.user.nickname }} · {{ record.created_at|date:'Y-m-d H:i' }}</p><p class="pre-wrap">{{ record.content }}</p>{% if record.contact %}<p class="contact-detail">联系方式：{{ record.contact }}</p>{% endif %}</section>
+<form method="post" class="panel content-editor">{% csrf_token %}{% include 'portal/form_fields.html' %}<div class="editor-actions"><button class="button" type="submit">保存处理结果</button></div></form>
+{% endblock %}

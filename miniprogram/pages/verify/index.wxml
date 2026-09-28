@@ -1,54 +1,81 @@
 <view class="page">
   <view class="hero">
-    <view class="hero__icon">
-      <t-icon name="secured" size="56rpx" />
-    </view>
-    <view class="hero__title">{{renewing ? '续期会员' : '学生认证'}}</view>
-    <view class="hero__desc">验证 Monash 学生邮箱后免费成为会员，有效期 12 个月</view>
+    <view class="hero__icon"><t-icon name="secured" size="56rpx" /></view>
+    <view class="hero__title">{{statusTitle || '会员申请'}}</view>
+    <view class="hero__desc">{{statusDescription}}</view>
   </view>
 
-  <view class="form">
-    <t-input
-      label="学生邮箱"
-      placeholder="abcd0001@student.monash.edu"
-      value="{{email}}"
-      clearable
-      bind:change="onEmailChange"
-      bind:clear="onEmailClear"
-    />
-    <t-input
-      label="验证码"
-      placeholder="6 位数字"
-      value="{{code}}"
-      type="number"
-      maxlength="{{6}}"
-      bind:change="onCodeChange"
-    >
-      <view
-        slot="suffix"
-        class="send {{countdown > 0 || sending ? 'send--disabled' : ''}}"
-        bind:tap="onSendCode"
+  <view wx:if="{{loading}}" class="status-note">正在刷新会员申请状态…</view>
+  <view wx:elif="{{loadError}}" class="status-note">暂时无法读取申请状态，请重试后再提交。</view>
+  <block wx:else>
+    <view wx:if="{{application}}" class="application-card">
+      <view>申请编号：{{application.id}}</view>
+      <view>学生邮箱：{{application.email}}</view>
+      <view wx:if="{{application.status === 'rejected'}}" class="review-note"
+        >审核意见：{{application.review_note || '请联系学生会了解原因'}}</view
       >
-        {{countdown > 0 ? countdown + ' 秒后重发' : '发送验证码'}}
-      </view>
-    </t-input>
-  </view>
+    </view>
+    <view wx:if="{{canApply}}" class="form">
+      <t-input
+        label="学生邮箱"
+        placeholder="abcd0001@student.monash.edu"
+        value="{{email}}"
+        disabled="{{submitting || renewing}}"
+        clearable="{{!renewing}}"
+        bind:change="onEmailChange"
+        bind:clear="onEmailClear"
+      />
+      <t-input
+        label="验证码"
+        placeholder="6 位数字"
+        value="{{code}}"
+        type="number"
+        maxlength="{{6}}"
+        disabled="{{submitting}}"
+        bind:change="onCodeChange"
+      >
+        <view
+          slot="suffix"
+          class="send {{countdown > 0 || sending || submitting ? 'send--disabled' : ''}}"
+          bind:tap="onSendCode"
+          >{{countdown > 0 ? countdown + ' 秒后重发' : sending ? '正在发送' : '发送验证码'}}</view
+        >
+      </t-input>
+    </view>
+    <view wx:if="{{canApply}}" class="actions">
+      <t-button
+        theme="primary"
+        size="large"
+        block
+        loading="{{submitting}}"
+        disabled="{{!canSubmit || sending}}"
+        bind:tap="onSubmit"
+        >{{renewing ? '提交续期申请' : application.status === 'rejected' ? '重新提交申请' :
+        '提交会员申请'}}</t-button
+      >
+    </view>
+    <view wx:if="{{me.membership.state === 'active'}}" class="actions">
+      <t-button theme="primary" variant="outline" block bind:tap="onViewCard"
+        >出示当前会员卡</t-button
+      >
+    </view>
+  </block>
 
-  <view class="actions">
-    <t-button
-      theme="primary"
-      size="large"
+  <view class="refresh-action"
+    ><t-button
+      theme="default"
       block
-      loading="{{submitting}}"
-      disabled="{{!canSubmit}}"
-      bind:tap="onSubmit"
-    >
-      {{renewing ? '完成续期' : '完成认证'}}
-    </t-button>
-  </view>
-
+      loading="{{loading}}"
+      disabled="{{submitting || loading}}"
+      bind:tap="load"
+      >刷新申请状态</t-button
+    ></view
+  >
   <view class="tips">
-    <view>收不到验证码？请检查邮箱的垃圾邮件，或等 60 秒后重新发送。</view>
-    <view wx:if="{{mockMode}}" class="tips__mock">假数据模式：验证码固定为 {{mockCode}}</view>
+    <view wx:if="{{canApply}}">收不到验证码？请检查垃圾邮件，或等 60 秒后重新发送。</view>
+    <view wx:if="{{mockMode}}" class="tips__mock"
+      >开发演示：验证码为
+      {{mockCode}}，不会发送邮件；申请仅保存在本次运行中，不会自动通过审核。</view
+    >
   </view>
 </view>

@@ -12,6 +12,7 @@ const config = vi.hoisted(() => ({ mock: false }))
 
 vi.mock('../../../miniprogram/config', () => ({
   MOCK_DELAY_MS: 0,
+  getDevelopmentLoginUsername: () => null,
   isMockEnabled: () => config.mock,
   getApiBaseUrl: () => 'https://api.test/api/v1',
 }))
@@ -61,6 +62,26 @@ describe('buildUrl', () => {
 })
 
 describe('request', () => {
+  it('读取保留15秒，写入等待30秒且网络失败不会自动重放', async () => {
+    fake.respondWith(() => ({ statusCode: 200, data: {} }))
+    await request({ method: 'GET', path: '/home', auth: false })
+    expect(fake.request.mock.calls[0][0].timeout).toBe(15000)
+    fake.respondWith(() => 'fail')
+    const err = await captureError(request({ method: 'POST', path: '/forum/posts' }))
+    expect(fake.request.mock.calls[1][0].timeout).toBe(30000)
+    expect(err.message).toContain('先刷新查看')
+    expect(fake.request).toHaveBeenCalledTimes(2)
+  })
+
+  it('写入401刷新登录后需用户确认重试，不自动重放POST', async () => {
+    const relogin = vi.fn(async () => {})
+    setUnauthorizedHandler(relogin)
+    fake.respondWith(() => ({ statusCode: 401, data: { code: 'UNAUTHORIZED', message: '过期' } }))
+    const err = await captureError(request({ method: 'POST', path: '/forum/posts' }))
+    expect(relogin).toHaveBeenCalledOnce()
+    expect(fake.request).toHaveBeenCalledOnce()
+    expect(err.message).toContain('再次提交')
+  })
   it('有 token 时带上 Authorization 头', async () => {
     fake.storage.set('auth_token', 'abc')
     fake.respondWith(() => ({ statusCode: 200, data: { ok: true } }))

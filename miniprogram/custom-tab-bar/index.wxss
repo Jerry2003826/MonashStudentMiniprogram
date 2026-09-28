@@ -1,4 +1,4 @@
 /* 标签栏不在页面里渲染，拿不到 app.wxss 里的变量，颜色要和 app.wxss 的 --brand-color 保持一致 */
 .tab-bar {
-  --td-tab-bar-active-color: #006dae;
+  --td-tab-bar-active-color: #b52f50;
 }

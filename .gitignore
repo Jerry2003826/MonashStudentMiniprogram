@@ -4,6 +4,9 @@ project.private.config.json
 # 依赖和构建产物
 node_modules/
 miniprogram_npm/
+artifacts/
+deploy/trial-config.json
+deploy/cloudrun.env.yaml
 
 # Python
 __pycache__/
@@ -11,6 +14,11 @@ __pycache__/
 .venv/
 .pytest_cache/
 .ruff_cache/
+.coverage
+htmlcov/
+server/var/
+*.sqlite3
+*.sqlite3-*
 
 # 环境变量和密钥
 .env

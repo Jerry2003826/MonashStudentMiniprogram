@@ -14,13 +14,14 @@ import type {
 import { request, uploadFile } from '../request'
 
 export function listBoards(): Promise<Board[]> {
-  return request<Board[]>({ method: 'GET', path: '/forum/boards' })
+  return request<Board[]>({ method: 'GET', path: '/forum/boards', auth: false })
 }
 
 export function listPosts(query: PostQuery): Promise<Paginated<PostSummary>> {
   return request<Paginated<PostSummary>>({
     method: 'GET',
     path: '/forum/posts',
+    auth: query.author === 'me',
     query: { board: query.board, q: query.q, author: query.author, cursor: query.cursor },
   })
 }
