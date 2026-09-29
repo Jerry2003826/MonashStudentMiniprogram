@@ -68,6 +68,7 @@
 <view wx:if="{{mapVisible && !showPrivacy}}" class="map-panel">
   <map
     wx:if="{{markers.length}}"
+    id="merchant-map"
     class="merchant-map"
     latitude="{{mapCentre.latitude}}"
     longitude="{{mapCentre.longitude}}"
@@ -79,12 +80,24 @@
     bindmarkertap="onMarkerTap"
     bindcallouttap="onMarkerTap"
   />
-  <view wx:else class="map-placeholder"
-    >{{loading ? '正在加载商家位置…' : '当前没有可显示的商家位置'}}</view
-  >
-  <view class="map-caption"
-    >地图仅显示当前已加载的 {{markers.length}} 家商家。点击标记查看详情{{hasMore ?
-    '，继续加载可查看更多' : ''}}。</view
+  <view wx:elif="{{pinsLoading}}" class="map-placeholder">正在加载商家位置…</view>
+  <button wx:elif="{{pinsFailed}}" class="retry-button" bind:tap="loadPins">
+    商家位置加载失败，点击重试
+  </button>
+  <view wx:else class="map-placeholder">当前没有可显示的商家位置</view>
+  <view wx:if="{{selectedPin}}" class="pin-card" bind:tap="onOpenSelectedPin">
+    <view class="pin-card__copy">
+      <view class="pin-card__name">{{selectedPin.name}}</view>
+      <view class="pin-card__meta"
+        >{{selectedPin.category.name}}{{selectedPin.distanceText ? ' · ' +
+        selectedPin.distanceText : ''}}</view
+      >
+      <view class="pin-card__discount">{{selectedPin.discount_summary}}</view>
+    </view>
+    <text class="pin-card__action">查看详情 ›</text>
+  </view>
+  <view wx:elif="{{markers.length}}" class="map-caption"
+    >地图显示全部 {{markers.length}} 家符合条件的商家，点击标记查看优惠。</view
   >
 </view>
 

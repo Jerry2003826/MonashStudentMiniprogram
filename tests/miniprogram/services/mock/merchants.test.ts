@@ -6,7 +6,10 @@ import type {
   MerchantFilters,
   Paginated,
 } from '../../../../miniprogram/types/api'
-import type { LocatedMerchantSummary } from '../../../../miniprogram/types/merchant-location'
+import type {
+  LocatedMerchantSummary,
+  MerchantMapPin,
+} from '../../../../miniprogram/types/merchant-location'
 import { call, errorCodeOf } from './call'
 
 function list(
@@ -152,6 +155,38 @@ describe('商家列表', () => {
   ])('拒绝无效坐标、排序或分页参数 %o', (query) => {
     expect(errorCodeOf(() => list(query))).toBe('VALIDATION_ERROR')
   })
+})
+
+describe('商家地图点位', () => {
+  function pins(query: Record<string, string | number | undefined> = {}): MerchantMapPin[] {
+    return call<{ items: MerchantMapPin[] }>('GET', '/merchants/map', undefined, query).items
+  }
+
+  it('不分页，返回全部上架商家的坐标', () => {
+    const active = getDb().merchants.filter((merchant) => merchant.is_active)
+    expect(active.length).toBeGreaterThan(6)
+    const all = pins()
+    expect(all.map((pin) => pin.id)).toEqual(active.map((merchant) => merchant.id))
+    expect(Object.keys(all[0]).sort()).toEqual(
+      ['category', 'discount_summary', 'id', 'latitude', 'longitude', 'name'].sort(),
+    )
+  })
+
+  it('和列表使用同样的分类、区域、名称和上架条件', () => {
+    const db = getDb()
+    const merchant = db.merchants[0]
+    const query = { category: merchant.category_id, area: merchant.area_id, q: merchant.name }
+    expect(pins(query).map((pin) => pin.id)).toEqual(list(query).items.map((item) => item.id))
+    merchant.is_active = false
+    expect(pins(query)).toEqual([])
+  })
+
+  it.each([{ category: 'all' }, { area: 0 }, { cursor: '0' }, { sort: 'distance' }])(
+    '拒绝无效或不支持的参数 %o',
+    (query) => {
+      expect(errorCodeOf(() => pins(query))).toBe('VALIDATION_ERROR')
+    },
+  )
 })
 
 describe('商家详情', () => {

@@ -1,5 +1,10 @@
 import type { MerchantDetail, MerchantFilters, Paginated } from '../../types/api'
-import type { LocatedMerchantSummary, NearbyMerchantQuery } from '../../types/merchant-location'
+import type {
+  LocatedMerchantSummary,
+  MerchantMapPin,
+  MerchantMapQuery,
+  NearbyMerchantQuery,
+} from '../../types/merchant-location'
 import { request } from '../request'
 
 export function getMerchantFilters(): Promise<MerchantFilters> {
@@ -22,6 +27,15 @@ export function listMerchants(
       longitude: query.longitude,
       sort: query.sort,
     },
+  })
+}
+
+export function listMerchantMapPins(query: MerchantMapQuery): Promise<{ items: MerchantMapPin[] }> {
+  return request<{ items: MerchantMapPin[] }>({
+    method: 'GET',
+    path: '/merchants/map',
+    auth: false,
+    query: { category: query.category, area: query.area, q: query.q },
   })
 }
 
