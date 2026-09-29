@@ -48,6 +48,11 @@ def merchants(request):
     return services.list_merchants(request.GET)
 
 
+@router.get("/merchants/map", auth=None)
+def merchant_map(request):
+    return services.merchant_map_pins(request.GET)
+
+
 @router.get("/merchants/{merchant_id}", auth=None)
 def merchant_detail(request, merchant_id: int):
     return services.get_merchant(merchant_id)

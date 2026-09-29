@@ -214,6 +214,7 @@ flowchart LR
 | GET | `/home` | 轮播图和精选商家 | 登录 |
 | GET | `/merchants/filters` | 分类和区域列表 | 登录 |
 | GET | `/merchants` | 商家列表，参数 `category`、`area`、`q` | 登录 |
+| GET | `/merchants/map` | 地图点位，参数同列表的 `category`、`area`、`q`，不分页，返回全部匹配商家 | 公开 |
 | GET | `/merchants/{id}` | 商家详情 | 登录 |
 | GET | `/forum/boards` | 板块列表 | 登录 |
 | GET | `/forum/posts` | 帖子列表，参数 `board`、`q`、`author=me` | 登录 |

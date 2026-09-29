@@ -169,12 +169,7 @@ def straight_line_distance(origin, destination):
     return 2 * EARTH_RADIUS_METRES * math.asin(math.sqrt(max(0, min(1, a))))
 
 
-def list_merchants(query):
-    _query(query, {"category", "area", "q", "cursor", "limit", "latitude", "longitude", "sort"})
-    offset, limit = _pagination(query)
-    if "sort" in query and query["sort"] != "distance":
-        raise _invalid("不支持的商家排序方式")
-    origin = _coordinates(query)
+def _matching_merchants(query):
     queryset = Merchant.objects.filter(published=True).select_related("category", "area")
     for field in ["category", "area"]:
         if field in query:
@@ -183,6 +178,16 @@ def list_merchants(query):
     keyword = _keyword(query)
     if keyword:
         queryset = queryset.filter(name__icontains=keyword)
+    return queryset
+
+
+def list_merchants(query):
+    _query(query, {"category", "area", "q", "cursor", "limit", "latitude", "longitude", "sort"})
+    offset, limit = _pagination(query)
+    if "sort" in query and query["sort"] != "distance":
+        raise _invalid("不支持的商家排序方式")
+    origin = _coordinates(query)
+    queryset = _matching_merchants(query)
 
     def located_summary(merchant):
         return {
@@ -200,6 +205,24 @@ def list_merchants(query):
         rows.sort(key=lambda row: (row["distance_m"], row["id"]))
         return _page(rows, offset, limit, lambda row: row)
     return _page(queryset, offset, limit, located_summary)
+
+
+def merchant_map_pins(query):
+    # 地图要显示全部匹配的商家，列表分页只加载了一部分，所以这里不分页。
+    _query(query, {"category", "area", "q"})
+    return {
+        "items": [
+            {
+                "id": merchant.pk,
+                "name": merchant.name,
+                "category": {"id": merchant.category_id, "name": merchant.category.name},
+                "discount_summary": merchant.discount_summary,
+                "latitude": merchant.latitude,
+                "longitude": merchant.longitude,
+            }
+            for merchant in _matching_merchants(query)
+        ]
+    }
 
 
 def get_merchant(merchant_id):
