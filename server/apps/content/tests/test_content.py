@@ -199,6 +199,35 @@ def test_merchant_query_validation(api, query):
     assert response.json()["code"] == "VALIDATION_ERROR"
 
 
+def test_merchant_map_returns_every_match_without_paging(api, merchants):
+    pins = api("get", "/merchants/map").json()
+    assert "next_cursor" not in pins
+    assert [row["id"] for row in pins["items"]] == [row.pk for row in merchants]
+    assert pins["items"][0] == {
+        "id": merchants[0].pk,
+        "name": "Cafe 0",
+        "category": {"id": merchants[0].category_id, "name": "生活服务"},
+        "discount_summary": "测试优惠",
+        "latitude": 0,
+        "longitude": 10,
+    }
+    target = merchants[1]
+    filtered = api("get", f"/merchants/map?category={target.category_id}&q=%20cafe%20").json()
+    assert [row["id"] for row in filtered["items"]] == [row.pk for row in merchants[1::2]]
+    merchants[1].published = False
+    merchants[1].save()
+    assert merchants[1].pk not in [
+        row["id"] for row in api("get", "/merchants/map").json()["items"]
+    ]
+
+
+@pytest.mark.parametrize("query", ["category=0", "area=abc", "cursor=0", "limit=10", "q=a&q=b"])
+def test_merchant_map_query_validation(api, query):
+    response = api("get", f"/merchants/map?{query}")
+    assert response.status_code == 422
+    assert response.json()["code"] == "VALIDATION_ERROR"
+
+
 def test_unpublishing_merchant_hides_list_detail_featured_and_banner(api, merchants):
     merchant = merchants[0]
     banner = Banner.objects.create(

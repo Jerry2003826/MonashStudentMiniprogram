@@ -10,7 +10,7 @@
 - 手册与联系：章节顺序、正文、官方网站和小助手微信号。未配置的联系方式返回空值。
 - 管理页面的新增/编辑仅允许显式列出的内容字段；发布与下架由编辑人员选择。用户无法通过附加请求字段取得角色或会员资格。
 
-`GET /home`、`/activities`、`/activities/{id}`、`/merchants/filters`、`/merchants`、`/merchants/{id}`、`/support` 为公开接口。搜索、分类、坐标和分页都在服务端校验。商家距离是 Haversine 直线距离，不是导航时间。
+`GET /home`、`/activities`、`/activities/{id}`、`/merchants/filters`、`/merchants`、`/merchants/map`、`/merchants/{id}`、`/support` 为公开接口。搜索、分类、坐标和分页都在服务端校验。商家距离是 Haversine 直线距离，不是导航时间。
 
 ## 论坛
 

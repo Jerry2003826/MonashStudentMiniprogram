@@ -175,6 +175,49 @@
   padding: 20rpx;
 }
 
+.map-panel .retry-button {
+  margin: 24rpx;
+}
+
+.pin-card {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 20rpx 24rpx;
+}
+
+.pin-card__copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.pin-card__name {
+  overflow: hidden;
+  color: var(--text-color-primary);
+  font-size: 28rpx;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pin-card__meta {
+  margin-top: 4rpx;
+  color: var(--text-color-secondary);
+  font-size: 22rpx;
+}
+
+.pin-card__discount {
+  margin-top: 8rpx;
+  color: var(--discount-color);
+  font-size: 24rpx;
+}
+
+.pin-card__action {
+  flex-shrink: 0;
+  color: var(--brand-color);
+  font-size: 24rpx;
+}
+
 .list {
   padding: 24rpx var(--spacing-page) 48rpx;
 }

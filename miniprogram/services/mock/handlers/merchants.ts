@@ -1,5 +1,9 @@
 import type { MerchantDetail, MerchantFilters, Paginated } from '../../../types/api'
-import type { Coordinates, LocatedMerchantSummary } from '../../../types/merchant-location'
+import type {
+  Coordinates,
+  LocatedMerchantSummary,
+  MerchantMapPin,
+} from '../../../types/merchant-location'
 import { isValidCoordinates, straightLineDistance } from '../../../utils/distance'
 import { getDb } from '../db'
 import { includesText, mockError, paginate, paramNumber } from '../helpers'
@@ -46,10 +50,22 @@ function readLocation(query: Record<string, string>): Coordinates | null {
   return location
 }
 
-function listMerchants({ query }: MockRequest): Paginated<LocatedMerchantSummary> {
-  const db = getDb()
+function matchingMerchants(query: Record<string, string>) {
   const category = readFilter(query, 'category')
   const area = readFilter(query, 'area')
+  const keyword = query.q ?? ''
+  return getDb().merchants.filter(
+    (merchant) =>
+      merchant.is_active &&
+      (category === undefined || merchant.category_id === category) &&
+      (area === undefined || merchant.area_id === area) &&
+      includesText(merchant.name, keyword),
+  )
+}
+
+function listMerchants({ query }: MockRequest): Paginated<LocatedMerchantSummary> {
+  const db = getDb()
+  const matched = matchingMerchants(query)
   if (query.sort !== undefined && query.sort !== 'distance') {
     throw mockError('VALIDATION_ERROR', '不支持的商家排序方式')
   }
@@ -60,14 +76,6 @@ function listMerchants({ query }: MockRequest): Paginated<LocatedMerchantSummary
     throw mockError('VALIDATION_ERROR', '分页游标无效')
   }
   const location = readLocation(query)
-  const keyword = query.q ?? ''
-  const matched = db.merchants.filter(
-    (merchant) =>
-      merchant.is_active &&
-      (category === undefined || merchant.category_id === category) &&
-      (area === undefined || merchant.area_id === area) &&
-      includesText(merchant.name, keyword),
-  )
   const items: LocatedMerchantSummary[] = matched.map((merchant) => ({
     ...toMerchantSummary(db, merchant),
     latitude: merchant.latitude,
@@ -81,6 +89,26 @@ function listMerchants({ query }: MockRequest): Paginated<LocatedMerchantSummary
   return paginate(items, query.cursor, PAGE_SIZE)
 }
 
+// 地图要显示全部匹配的商家，列表分页只加载了一部分，所以这里不分页。
+function listMapPins({ query }: MockRequest): { items: MerchantMapPin[] } {
+  const unsupported = Object.keys(query).filter((key) => !['category', 'area', 'q'].includes(key))
+  if (unsupported.length) throw mockError('VALIDATION_ERROR', '包含不支持的查询参数')
+  const db = getDb()
+  return {
+    items: matchingMerchants(query).map((merchant) => {
+      const { id, name, category, discount_summary } = toMerchantSummary(db, merchant)
+      return {
+        id,
+        name,
+        category,
+        discount_summary,
+        latitude: merchant.latitude,
+        longitude: merchant.longitude,
+      }
+    }),
+  }
+}
+
 function getMerchant({ params }: MockRequest): MerchantDetail {
   const db = getDb()
   const id = paramNumber(params, 'id')
@@ -92,5 +120,6 @@ function getMerchant({ params }: MockRequest): MerchantDetail {
 export const merchantRoutes: MockRoute[] = [
   { method: 'GET', pattern: '/merchants/filters', handler: getFilters },
   { method: 'GET', pattern: '/merchants', handler: listMerchants },
+  { method: 'GET', pattern: '/merchants/map', handler: listMapPins },
   { method: 'GET', pattern: '/merchants/:id', handler: getMerchant },
 ]

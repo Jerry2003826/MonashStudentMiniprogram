@@ -1,8 +1,20 @@
-import { getMerchantFilters, listMerchants } from '../../services/api/merchants'
+import {
+  getMerchantFilters,
+  listMerchantMapPins,
+  listMerchants,
+} from '../../services/api/merchants'
 import { fetchMe, getCachedMe } from '../../services/auth'
 import { showError } from '../../services/errors'
-import type { Coordinates, LocatedMerchantSummary } from '../../types/merchant-location'
-import { isValidCoordinates } from '../../utils/distance'
+import type {
+  Coordinates,
+  LocatedMerchantSummary,
+  MerchantMapPin,
+} from '../../types/merchant-location'
+import {
+  formatStraightLineDistance,
+  isValidCoordinates,
+  straightLineDistance,
+} from '../../utils/distance'
 import { memberEntry } from '../../utils/membership'
 import { syncTabBar } from '../../utils/tab-bar'
 
@@ -14,8 +26,23 @@ interface FilterOption {
 const ALL = 0
 const DEFAULT_MAP_CENTRE: Coordinates = { latitude: -37.9105, longitude: 145.134 }
 
-function merchantMarkers(items: LocatedMerchantSummary[]) {
-  return items.filter(isValidCoordinates).map((merchant) => ({
+// 包围盒中心，避免地图停在第一家商家附近、其他区域的商家落在画面外
+function centreOf(points: Coordinates[]): Coordinates | null {
+  if (!points.length) return null
+  const latitudes = points.map((point) => point.latitude)
+  const longitudes = points.map((point) => point.longitude)
+  return {
+    latitude: (Math.min(...latitudes) + Math.max(...latitudes)) / 2,
+    longitude: (Math.min(...longitudes) + Math.max(...longitudes)) / 2,
+  }
+}
+
+interface SelectedPin extends MerchantMapPin {
+  distanceText: string
+}
+
+function merchantMarkers(pins: MerchantMapPin[]) {
+  return pins.filter(isValidCoordinates).map((merchant) => ({
     id: merchant.id,
     latitude: merchant.latitude,
     longitude: merchant.longitude,
@@ -42,6 +69,10 @@ Page({
     entry: memberEntry(null),
     mapVisible: false,
     mapCentre: DEFAULT_MAP_CENTRE,
+    pins: [] as MerchantMapPin[],
+    pinsLoading: false,
+    pinsFailed: false,
+    selectedPin: null as SelectedPin | null,
     markers: merchantMarkers([]),
     mapPoints: [] as Coordinates[],
     nearby: false,
@@ -56,6 +87,9 @@ Page({
   // 筛选条件切换太快时，只保留最后一次请求的结果
   requestSeq: 0,
   locationSeq: 0,
+  pinSeq: 0,
+  // 筛选条件变了但地图还没展开时，等展开再加载点位
+  pinsStale: true,
 
   async onLoad() {
     try {
@@ -91,6 +125,7 @@ Page({
   onUnload() {
     this.locationSeq += 1
     this.requestSeq += 1
+    this.pinSeq += 1
   },
 
   async loadMemberEntry() {
@@ -115,10 +150,10 @@ Page({
   },
 
   async refresh() {
+    this.pinsStale = true
+    if (this.data.mapVisible) this.loadPins()
     this.setData({
       items: [],
-      markers: [],
-      mapPoints: [],
       cursor: null,
       hasMore: true,
       loaded: false,
@@ -148,14 +183,8 @@ Page({
         sort: location ? 'distance' : undefined,
       })
       if (seq !== this.requestSeq) return
-      const items = [...this.data.items, ...page.items]
-      const markers = merchantMarkers(items)
-      const mapPoints = markers.map(({ latitude, longitude }) => ({ latitude, longitude }))
       this.setData({
-        items,
-        markers,
-        mapPoints,
-        mapCentre: mapPoints[0] ?? location ?? DEFAULT_MAP_CENTRE,
+        items: [...this.data.items, ...page.items],
         cursor: page.next_cursor,
         hasMore: page.next_cursor !== null,
         loaded: true,
@@ -168,6 +197,54 @@ Page({
     } finally {
       if (seq === this.requestSeq) this.setData({ loading: false })
     }
+  },
+
+  async loadPins() {
+    this.pinSeq += 1
+    const seq = this.pinSeq
+    this.pinsStale = false
+    this.setData({ pinsLoading: true, pinsFailed: false, selectedPin: null })
+    try {
+      const { keyword, category, area } = this.data
+      const { items } = await listMerchantMapPins({
+        q: keyword || undefined,
+        category: category || undefined,
+        area: area || undefined,
+      })
+      if (seq !== this.pinSeq) return
+      const markers = merchantMarkers(items)
+      const mapPoints = markers.map(({ latitude, longitude }) => ({ latitude, longitude }))
+      this.setData(
+        {
+          pins: items,
+          markers,
+          mapPoints,
+          mapCentre: centreOf(mapPoints) ?? this.data.location ?? DEFAULT_MAP_CENTRE,
+        },
+        () => this.fitMapToPins(),
+      )
+    } catch (err) {
+      if (seq !== this.pinSeq) return
+      this.pinsStale = true
+      this.setData({ pinsFailed: true })
+      showError(err)
+    } finally {
+      if (seq === this.pinSeq) this.setData({ pinsLoading: false })
+    }
+  },
+
+  // 模板里的 include-points 在地图刚创建时经常不生效，渲染后再主动缩放一次
+  fitMapToPins() {
+    const points = this.data.mapPoints
+    if (!this.data.mapVisible || points.length === 0) return
+    if (points.length === 1) {
+      this.setData({ mapCentre: points[0] })
+      return
+    }
+    wx.createMapContext('merchant-map', this).includePoints({
+      points,
+      padding: [48, 48, 48, 48],
+    })
   },
 
   onSearch(e: WechatMiniprogram.CustomEvent<{ value: string }>) {
@@ -191,14 +268,27 @@ Page({
   },
 
   onToggleMap() {
-    this.setData({ mapVisible: !this.data.mapVisible })
+    const mapVisible = !this.data.mapVisible
+    this.setData({ mapVisible, selectedPin: null }, () => {
+      // 地图用 wx:if 渲染，每次展开都是新建的，需要重新缩放
+      if (mapVisible && !this.pinsStale) this.fitMapToPins()
+    })
+    if (mapVisible && this.pinsStale) this.loadPins()
   },
 
   onMarkerTap(e: WechatMiniprogram.CustomEvent<{ markerId: number }>) {
-    const id = Number(e.detail.markerId)
-    if (this.data.items.some((merchant) => merchant.id === id)) {
-      wx.navigateTo({ url: `/pages/merchant-detail/index?id=${id}` })
-    }
+    const pin = this.data.pins.find((item) => item.id === Number(e.detail.markerId))
+    if (!pin) return
+    const { location } = this.data
+    const distanceText = location
+      ? formatStraightLineDistance(straightLineDistance(location, pin))
+      : ''
+    this.setData({ selectedPin: { ...pin, distanceText } })
+  },
+
+  onOpenSelectedPin() {
+    const pin = this.data.selectedPin
+    if (pin) wx.navigateTo({ url: `/pages/merchant-detail/index?id=${pin.id}` })
   },
 
   onNearbyTap() {
