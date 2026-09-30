@@ -20,6 +20,7 @@ Page({
   },
 
   timer: null as ReturnType<typeof setInterval> | null,
+  revalidationTimer: null as ReturnType<typeof setInterval> | null,
   requestSeq: 0,
 
   onLoad() {
@@ -30,11 +31,16 @@ Page({
   },
 
   async onShow() {
-    const seq = ++this.requestSeq
-    this.setData({ loading: true, loadFailed: false, card: memberCardState(null) })
     this.tick()
     this.startClock()
     wx.setKeepScreenOn({ keepScreenOn: true })
+    await this.revalidate()
+  },
+
+  async revalidate(notify = true) {
+    const seq = ++this.requestSeq
+    // A stalled or failed server check must never leave the old active card visible.
+    this.setData({ loading: true, loadFailed: false, me: null, card: memberCardState(null) })
     try {
       const me = await fetchMe()
       if (seq !== this.requestSeq) return
@@ -47,7 +53,7 @@ Page({
     } catch (err) {
       if (seq === this.requestSeq) {
         this.setData({ loadFailed: true })
-        showError(err)
+        if (notify) showError(err)
       }
     } finally {
       if (seq === this.requestSeq) this.setData({ loading: false })
@@ -86,12 +92,20 @@ Page({
   startClock() {
     this.stopClock()
     this.timer = setInterval(() => this.tick(), 1000)
+    // Timers do not depend on the device wall clock. Recheck even if it is moved back.
+    this.revalidationTimer = setInterval(() => {
+      if (!this.data.loading) void this.revalidate(false)
+    }, 30_000)
   },
 
   stopClock() {
     if (this.timer) {
       clearInterval(this.timer)
       this.timer = null
+    }
+    if (this.revalidationTimer) {
+      clearInterval(this.revalidationTimer)
+      this.revalidationTimer = null
     }
   },
 

@@ -33,6 +33,8 @@ uv run --env-file .env python manage.py runserver 127.0.0.1:8000
 
 ## 联调小程序
 
+学生邮箱域名统一在服务端 `MEMBERSHIP_ALLOWED_EMAIL_DOMAINS` 配置，多个域名用逗号分隔（默认 `student.monash.edu`）。`GET /api/v1/membership/config` 无需登录，只公开标准化后的 `allowed_email_domains`；小程序读取它来展示和校验，不需要重编译来调整域名。配置为空或含非法域名时相关接口返回 503，小程序配置读取失败时禁止发送和提交，刷新成功后恢复。Mock 模式使用演示配置，不代表真实服务的域名列表。
+
 在 `miniprogram/config.ts` 中将 `MOCK_IN_DEVELOP` 改为 `false`，将 `DEVELOPMENT_LOGIN_USERNAME` 从 `null` 改为一个上述开发身份。清除开发者工具中的 `auth_token` 并重新编译；开发者工具访问本机 HTTP 时，需要其本地调试设置允许未配置合法域名的请求。
 
 开发身份只允许开发版、loopback API 和后端双开关都明确启用的环境。原配置默认 `null`，走 `wx.login`。不要把本地 URL 配成体验版/正式版地址。

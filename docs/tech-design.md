@@ -197,7 +197,7 @@ flowchart LR
 
 ### 5.3 接口清单
 
-所有接口都在 `/api/v1` 下，使用 JSON。除了健康检查、登录和微信回调，其他接口都要带 token。列表接口统一用游标分页：请求带 `cursor` 和 `limit`（默认 20），返回 `{ "items": [...], "next_cursor": "..." }`，`next_cursor` 为 `null` 表示没有更多数据。
+所有接口都在 `/api/v1` 下，使用 JSON。除了健康检查、登录、会员邮箱公开配置和微信回调，其他接口都要带 token。列表接口统一用游标分页：请求带 `cursor` 和 `limit`（默认 20），返回 `{ "items": [...], "next_cursor": "..." }`，`next_cursor` 为 `null` 表示没有更多数据。
 
 「权限」一列中，「登录」表示任何已登录用户，「会员」表示有效会员且不在禁言期，「作者」表示内容的发布者本人。
 
@@ -209,6 +209,7 @@ flowchart LR
 | PUT | `/me` | 修改昵称（`wx.request` 不支持 PATCH，所以用 PUT） | 登录 |
 | POST | `/me/avatar` | 上传头像 | 登录 |
 | DELETE | `/me` | 注销账号 | 登录 |
+| GET | `/membership/config` | 允许的学生邮箱域名 `allowed_email_domains` | 无 |
 | POST | `/membership/email-code` | 发送验证码 | 登录 |
 | POST | `/membership/verify` | 提交验证码，完成认证或续期 | 登录 |
 | GET | `/home` | 轮播图和精选商家 | 登录 |
@@ -269,6 +270,8 @@ sequenceDiagram
 - 注销账号时：清空昵称和头像，删除 `Membership`、`EmailCode`、所有 token 和 `WechatIdentity`，并记录 `deleted_at`。帖子和评论保留，作者显示为「已注销用户」。同一个微信号之后再打开小程序，会作为新用户登录。
 
 ### 5.5 学生邮箱认证
+
+**公开配置**（`GET /membership/config`）返回 `{ "allowed_email_domains": ["student.monash.edu"] }`，内容来自服务端 `MEMBERSHIP_ALLOWED_EMAIL_DOMAINS`，去掉空格、转小写并去重。小程序每次刷新申请页都读取此配置，用于邮箱提示和校验，不内置真实环境的域名限制。多个域名使用精确匹配，不自动允许子域名。配置加载失败或列表无效时，发送验证码和提交申请都会关闭，刷新成功后恢复；后端仍独立验证邮箱与域名。空配置或非法域名使公开配置和验证接口返回 `503 INTERNAL_ERROR`。
 
 **发送验证码**（`POST /membership/email-code`）
 

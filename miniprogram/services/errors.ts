@@ -41,7 +41,7 @@ export function defaultMessage(code: ClientErrorCode): string {
     case 'VALIDATION_ERROR':
       return '填写的内容有误，请检查后再试'
     case 'EMAIL_DOMAIN_NOT_ALLOWED':
-      return '请使用 @student.monash.edu 学生邮箱'
+      return '请使用当前允许的学生邮箱域名'
     case 'CODE_INVALID':
       return '验证码错误或已过期'
     case 'CONTENT_RISKY':

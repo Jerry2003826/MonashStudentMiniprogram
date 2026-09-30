@@ -131,7 +131,7 @@ def forum_pin(request, record_id):
 def forum_resolve_report(request, record_id):
     form = ReportResolveForm(request.POST)
     if not form.is_valid():
-        messages.error(request, "处理备注最多 1000 字。")
+        messages.error(request, "请填写处理备注，最多 1000 字。")
     else:
         try:
             resolve_report(request.user, record_id, form.cleaned_data["note"])

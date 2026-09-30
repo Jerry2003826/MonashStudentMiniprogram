@@ -6,7 +6,9 @@
   </view>
 
   <view wx:if="{{loading}}" class="status-note">正在刷新会员申请状态…</view>
-  <view wx:elif="{{loadError}}" class="status-note">暂时无法读取申请状态，请重试后再提交。</view>
+  <view wx:elif="{{loadError}}" class="status-note"
+    >暂时无法读取申请状态或学生邮箱配置，请重试后再提交。</view
+  >
   <block wx:else>
     <view wx:if="{{application}}" class="application-card">
       <view>申请编号：{{application.id}}</view>
@@ -18,7 +20,7 @@
     <view wx:if="{{canApply}}" class="form">
       <t-input
         label="学生邮箱"
-        placeholder="abcd0001@student.monash.edu"
+        placeholder="{{emailPlaceholder}}"
         value="{{email}}"
         disabled="{{submitting || renewing}}"
         clearable="{{!renewing}}"
@@ -42,6 +44,7 @@
         >
       </t-input>
     </view>
+    <view wx:if="{{canApply}}" class="email-domains">{{emailDomainHint}}</view>
     <view wx:if="{{canApply}}" class="actions">
       <t-button
         theme="primary"

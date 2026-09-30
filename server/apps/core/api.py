@@ -8,6 +8,7 @@ from ninja.security import HttpBearer
 
 from . import services
 from .errors import ServiceError
+from .membership_config import allowed_email_domains
 from .models import Application
 from .permissions import require_staff
 from .schemas import (
@@ -16,6 +17,7 @@ from .schemas import (
     DevLoginInput,
     EmailCodeInput,
     LoginOutput,
+    MembershipConfigOutput,
     MeOutput,
     ProfileInput,
     ReviewInput,
@@ -123,6 +125,11 @@ def update_profile(request, body: ProfileInput):
 def update_profile_compat(request, body: ProfileInput):
     user = services.update_nickname(request.auth, body.nickname, request=request)
     return services.build_me(user)
+
+
+@api.get("/membership/config", auth=None, response=MembershipConfigOutput)
+def membership_config(request):
+    return {"allowed_email_domains": allowed_email_domains()}
 
 
 @api.post("/membership/email-code")

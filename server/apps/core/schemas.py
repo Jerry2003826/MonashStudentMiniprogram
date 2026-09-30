@@ -61,6 +61,10 @@ class MembershipOutput(Schema):
     application: ApplicationOutput | None
 
 
+class MembershipConfigOutput(Schema):
+    allowed_email_domains: list[str]
+
+
 class MeOutput(Schema):
     id: int
     nickname: str

@@ -4,7 +4,7 @@
 <div class="page-heading">
   <p class="eyebrow">MEMBERSHIP</p>
   <h1>会员申请审核</h1>
-  <p class="muted">核对申请信息后，明确选择批准或拒绝。每次显示最近 100 条记录。</p>
+  <p class="muted">核对申请信息后，明确选择批准或拒绝。每页显示 {{ page.paginator.per_page }} 条记录，共 {{ page.paginator.count }} 条。</p>
 </div>
 <nav class="tabs" aria-label="申请状态">
   <a class="{% if status == 'pending' %}selected{% endif %}" href="?status=pending">待审核</a>
@@ -36,10 +36,17 @@
   </form>
   {% else %}
   <div class="review-record">
-    <p>审核人：{{ application.reviewer.nickname|default:application.reviewer.username }} · {{ application.reviewed_at|date:'Y-m-d H:i' }}</p>
+    <p>审核人：{% if application.reviewer %}{{ application.reviewer.nickname|default:application.reviewer.username }}{% else %}未记录或账号已移除{% endif %} · {{ application.reviewed_at|date:'Y-m-d H:i' }}</p>
     {% if application.review_note %}<p>{{ application.review_note|linebreaksbr }}</p>{% endif %}
   </div>
   {% endif %}
 </article>
 {% empty %}<section class="panel empty-state"><h2>暂无此状态的申请</h2><p class="muted">新的会员申请会在这里显示。</p></section>{% endfor %}
+{% if page.paginator.num_pages > 1 %}
+<nav class="pagination" aria-label="申请分页">
+  {% if page.has_previous %}<a href="?status={{ status }}&amp;page={{ page.previous_page_number }}">上一页</a>{% endif %}
+  <span>第 {{ page.number }} / {{ page.paginator.num_pages }} 页</span>
+  {% if page.has_next %}<a href="?status={{ status }}&amp;page={{ page.next_page_number }}">下一页</a>{% endif %}
+</nav>
+{% endif %}
 {% endblock %}

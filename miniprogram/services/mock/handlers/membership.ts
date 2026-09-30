@@ -1,6 +1,6 @@
 import { MOCK_VERIFICATION_CODE } from '../../../config'
-import type { Me } from '../../../types/api'
-import { isStudentEmail, normalizeEmail } from '../../../utils/validate'
+import type { Me, MembershipConfig } from '../../../types/api'
+import { isStudentEmail, normalizeEmail, normalizeEmailDomains } from '../../../utils/validate'
 import { getDb, takeId } from '../db'
 import { mockError, readString } from '../helpers'
 import type { MockRequest, MockRoute } from '../router'
@@ -9,9 +9,16 @@ import { buildMe, DAY_MS, RENEW_WINDOW_DAYS } from './me'
 const RESEND_COOLDOWN_MS = 60 * 1000
 const CODE_TTL_MS = 10 * 60 * 1000
 
+function membershipConfig(): MembershipConfig {
+  const domains = normalizeEmailDomains(getDb().membershipAllowedEmailDomains)
+  if (!domains) throw mockError('INTERNAL_ERROR', '学生邮箱配置暂不可用，请刷新后重试')
+  return { allowed_email_domains: domains }
+}
+
 function readEmail(body: unknown): string {
   const email = normalizeEmail(readString(body, 'email'))
-  if (!isStudentEmail(email)) throw mockError('EMAIL_DOMAIN_NOT_ALLOWED')
+  if (!isStudentEmail(email, membershipConfig().allowed_email_domains))
+    throw mockError('EMAIL_DOMAIN_NOT_ALLOWED')
   return email
 }
 
@@ -63,6 +70,7 @@ function submitApplication({ body }: MockRequest): Me {
 }
 
 export const membershipRoutes: MockRoute[] = [
+  { method: 'GET', pattern: '/membership/config', handler: membershipConfig },
   { method: 'POST', pattern: '/membership/email-code', handler: sendEmailCode },
   { method: 'POST', pattern: '/membership/applications', handler: submitApplication },
 ]

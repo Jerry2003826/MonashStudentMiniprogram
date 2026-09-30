@@ -170,11 +170,10 @@ def create_post(actor, board_id, title, content, image_ids=None, *, request=None
     return Post.objects.create(author=user, board=board, title=title, content=content)
 
 
-@transaction.atomic
-def create_comment(actor, post_id, content, reply_to_user_id=None, *, request=None):
+def comment_context(actor, post_id, reply_to_user_id):
+    # Called inside short transactions both before and after the remote check.
     user = require_writer(actor)
     post = interactive_post(post_id, lock=True)
-    content = text_value(content, "评论", 500)
     if reply_to_user_id is not None:
         participant = (
             reply_to_user_id == post.author_id
@@ -183,10 +182,22 @@ def create_comment(actor, post_id, content, reply_to_user_id=None, *, request=No
         if not participant:
             raise ServiceError(422, "VALIDATION_ERROR", "只能回复本帖作者或可见评论的参与者")
     check_publish_limit(user, Comment, COMMENT_COOLDOWN_SECONDS, COMMENT_DAILY_LIMIT)
+    return user, post
+
+
+def create_comment(actor, post_id, content, reply_to_user_id=None, *, request=None):
+    with transaction.atomic():
+        user, _ = comment_context(actor, post_id, reply_to_user_id)
+        content = text_value(content, "评论", 500)
+
+    # External I/O must not hold the author or shared post lock. Eligibility can
+    # change during this call, so repeat every mutable check under locks below.
     wechat_safety.check_text(user, content, 2, request=request)
-    return Comment.objects.create(
-        post=post, author=user, reply_to_id=reply_to_user_id, content=content
-    )
+    with transaction.atomic():
+        user, post = comment_context(actor, post_id, reply_to_user_id)
+        return Comment.objects.create(
+            post=post, author=user, reply_to_id=reply_to_user_id, content=content
+        )
 
 
 @transaction.atomic
@@ -211,7 +222,9 @@ def delete_comment(actor, comment_id):
     comment = Comment.objects.select_for_update().filter(pk=comment_id, deleted=False).first()
     if comment is None:
         raise ServiceError(404, "NOT_FOUND", "评论不存在或已删除")
-    interactive_post(comment.post_id, lock=True)
+    # Keep serialization with writes to this thread, without requiring its
+    # parent to remain public: authors can withdraw their own hidden content.
+    Post.objects.select_for_update().get(pk=comment.post_id)
     if comment.author_id != actor.pk:
         require_staff(actor, "content.manage")
     comment.deleted = True

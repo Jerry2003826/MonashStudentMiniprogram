@@ -30,4 +30,4 @@ class PinPostForm(forms.Form):
 
 
 class ReportResolveForm(forms.Form):
-    note = forms.CharField(label="处理备注", max_length=1000, required=False)
+    note = forms.CharField(label="处理备注", max_length=1000)

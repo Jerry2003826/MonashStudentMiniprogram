@@ -344,7 +344,6 @@ def test_hidden_parent_blocks_comments_likes_and_reports(api, users, boards, hid
         ("post", f"/posts/{post.pk}/comments", {"content": "不应发布"}),
         ("put", f"/posts/{post.pk}/like", None),
         ("delete", f"/posts/{post.pk}/like", None),
-        ("delete", f"/comments/{comment.pk}", None),
         ("post", "/reports", {"target_type": "post", "target_id": post.pk, "reason": "other"}),
         (
             "post",

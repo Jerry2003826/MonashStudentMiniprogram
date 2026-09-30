@@ -29,7 +29,7 @@
   <p class="pre-wrap">{{ record.detail }}</p>
   <div class="content-preview"><strong>被举报内容{% if entry.target_title %} · {{ entry.target_title }}{% endif %}</strong><p class="pre-wrap">{{ entry.target_preview }}</p><span class="muted">展示最多 600 字。</span>{% if entry.target_url %}<p><a href="{{ entry.target_url }}">查看并审核原内容 →</a></p>{% endif %}</div>
   {% if record.status == 'new' %}
-  <form class="review-form" method="post" action="{% url 'portal:forum_report' record.id %}">{% csrf_token %}<label for="report-note-{{ record.id }}">处理备注（必填）</label><textarea id="report-note-{{ record.id }}" name="note" maxlength="1000" rows="3"></textarea><button class="button" type="submit">确认标记为已处理</button></form>
+  <form class="review-form" method="post" action="{% url 'portal:forum_report' record.id %}">{% csrf_token %}<label for="report-note-{{ record.id }}">处理备注（必填）</label><textarea id="report-note-{{ record.id }}" name="note" maxlength="1000" rows="3" required></textarea><button class="button" type="submit">确认标记为已处理</button></form>
   {% else %}<p class="pre-wrap"><strong>处理备注：</strong>{{ record.resolution_note|default:'未填写' }}</p>{% endif %}
   {% else %}
   <div class="card-heading"><div><h2>{% if kind == 'posts' %}{{ record.title }}{% else %}评论 #{{ record.id }}{% endif %}</h2><p class="muted">{{ record.author.nickname }} · {{ record.created_at|date:'Y-m-d H:i' }}{% if kind == 'posts' %} · {{ record.board.name }} · 帖子 #{{ record.id }}{% else %} · 所属帖子 #{{ record.post_id }}{% endif %}</p></div><span class="badge badge-{{ record.status }}">{% if record.status == 'pending' %}待审核{% elif record.status == 'approved' %}已批准{% else %}已拒绝{% endif %}</span></div>
