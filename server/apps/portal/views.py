@@ -2,6 +2,7 @@ from functools import wraps
 
 from django.contrib import messages
 from django.contrib.auth import login, logout
+from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -151,12 +152,13 @@ def applications(request):
     applications = (
         Application.objects.filter(status=status)
         .select_related("user", "reviewer")
-        .order_by("-submitted_at")[:100]
+        .order_by("-submitted_at", "-pk")
     )
+    page = Paginator(applications, 20).get_page(request.GET.get("page"))
     return render(
         request,
         "portal/applications.html",
-        context(request, applications=applications, status=status),
+        context(request, applications=page, page=page, status=status),
     )
 
 

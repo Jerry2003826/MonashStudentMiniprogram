@@ -72,6 +72,7 @@ interface Detail {
   data: { post: PostDetail | null; draft: string; comments: Comment[]; sending: boolean }
   setData(patch: Record<string, unknown>): void
   onLoad(query: { id: string }): Promise<void>
+  loadComments(): Promise<void>
   onSendComment(): Promise<void>
   onToggleLike(): Promise<void>
   removeComment(comment: Comment & { timeText: string }): Promise<void>
@@ -200,5 +201,87 @@ describe('论坛人工审核页面', () => {
     await detail.removeComment({ ...comment, timeText: '' })
     expect(detail.data.post?.comment_count).toBe(3)
     expect(detail.data.comments).toHaveLength(0)
+  })
+})
+
+describe('评论分页去重', () => {
+  function comment(id: number, status: Comment['moderation_status'] = 'approved'): Comment {
+    return {
+      id,
+      author: post().author,
+      reply_to: null,
+      content: `评论 ${id}`,
+      created_at: new Date(Date.UTC(2026, 8, 28, 0, 0, id)).toISOString(),
+      is_mine: true,
+      moderation_status: status,
+      review_note: '',
+    }
+  }
+
+  it('25条评论后新提交的第26条不会在第二页重复，并保留服务器最新审核状态及顺序', async () => {
+    mocks.comments.mockResolvedValueOnce({
+      items: Array.from({ length: 20 }, (_, i) => comment(i + 1)),
+      next_cursor: '20',
+    })
+    const detail = await page<Detail>('detail')
+    await detail.onLoad({ id: '9' })
+    mocks.comment.mockResolvedValueOnce(comment(26, 'pending'))
+    detail.data.draft = '新的评论'
+    await detail.onSendComment()
+    expect(detail.data.comments).toHaveLength(21)
+    mocks.comments.mockResolvedValueOnce({
+      items: Array.from({ length: 6 }, (_, i) => comment(i + 21)),
+      next_cursor: null,
+    })
+    await detail.loadComments()
+    expect(mocks.comments).toHaveBeenLastCalledWith(9, '20')
+    expect(detail.data.comments.map((item) => item.id)).toEqual(
+      Array.from({ length: 26 }, (_, i) => i + 1),
+    )
+    expect(detail.data.comments[25].moderation_status).toBe('approved')
+    await detail.loadComments()
+    expect(mocks.comments).toHaveBeenCalledTimes(2)
+  })
+
+  it('分页先于提交响应返回同一条评论时保留最新审核状态且不重复', async () => {
+    mocks.comments.mockResolvedValueOnce({ items: [comment(1)], next_cursor: '20' })
+    const detail = await page<Detail>('detail')
+    await detail.onLoad({ id: '9' })
+    let resolve!: (value: Comment) => void
+    mocks.comment.mockImplementationOnce(
+      () =>
+        new Promise<Comment>((done) => {
+          resolve = done
+        }),
+    )
+    detail.data.draft = '新的评论'
+    const sending = detail.onSendComment()
+    await Promise.resolve()
+    mocks.comments.mockResolvedValueOnce({ items: [comment(2, 'approved')], next_cursor: null })
+    await detail.loadComments()
+    resolve(comment(2, 'pending'))
+    await sending
+    expect(detail.data.comments.map((item) => item.id)).toEqual([1, 2])
+    expect(detail.data.comments[1].moderation_status).toBe('approved')
+  })
+
+  it('重叠页面按ID合并，相同时间用ID稳定排序，失败重试不丢已有评论', async () => {
+    const sameTime = comment(1).created_at
+    mocks.comments.mockResolvedValueOnce({ items: [comment(1)], next_cursor: '20' })
+    const detail = await page<Detail>('detail')
+    await detail.onLoad({ id: '9' })
+    mocks.comments.mockRejectedValueOnce(new Error('offline'))
+    await detail.loadComments()
+    expect(detail.data.comments.map((item) => item.id)).toEqual([1])
+    mocks.comments.mockResolvedValueOnce({
+      items: [
+        { ...comment(3), created_at: sameTime },
+        comment(1),
+        { ...comment(2), created_at: sameTime },
+      ],
+      next_cursor: null,
+    })
+    await detail.loadComments()
+    expect(detail.data.comments.map((item) => item.id)).toEqual([1, 2, 3])
   })
 })

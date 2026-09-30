@@ -1,5 +1,5 @@
 import { isMockEnabled, MOCK_VERIFICATION_CODE } from '../../config'
-import { sendEmailCode, verifyEmail } from '../../services/api/membership'
+import { fetchMembershipConfig, sendEmailCode, verifyEmail } from '../../services/api/membership'
 import { fetchMe } from '../../services/auth'
 import { showError } from '../../services/errors'
 import type { Me, MembershipApplication } from '../../types/api'
@@ -14,6 +14,9 @@ Page({
     me: null as Me | null,
     application: null as MembershipApplication | null,
     email: '',
+    allowedEmailDomains: [] as string[],
+    emailPlaceholder: '',
+    emailDomainHint: '',
     code: '',
     countdown: 0,
     loading: true,
@@ -53,17 +56,35 @@ Page({
   async load() {
     if (this.data.submitting) return
     const seq = ++this.requestSeq
-    this.setData({ loading: true, loadError: false })
+    this.setData({
+      loading: true,
+      loadError: false,
+      canSubmit: false,
+      allowedEmailDomains: [],
+      emailPlaceholder: '',
+      emailDomainHint: '',
+    })
     try {
-      const me = await fetchMe()
-      if (seq === this.requestSeq) this.applyMe(me)
+      const [me, config] = await Promise.all([fetchMe(), fetchMembershipConfig()])
+      if (seq === this.requestSeq) {
+        const domains = config.allowed_email_domains
+        this.setData({
+          allowedEmailDomains: domains,
+          emailPlaceholder: `name@${domains[0]}`,
+          emailDomainHint: `支持的邮箱域名：${domains.map((domain) => `@${domain}`).join('、')}`,
+        })
+        this.applyMe(me)
+      }
     } catch (err) {
       if (seq === this.requestSeq) {
         this.setData({ loadError: true, canSubmit: false })
         showError(err)
       }
     } finally {
-      if (seq === this.requestSeq) this.setData({ loading: false })
+      if (seq === this.requestSeq) {
+        this.setData({ loading: false })
+        this.updateCanSubmit()
+      }
     }
   },
 
@@ -131,9 +152,14 @@ Page({
   },
 
   updateCanSubmit() {
-    const { email, code, canApply, loadError } = this.data
+    const { email, code, canApply, loading, loadError, allowedEmailDomains } = this.data
     this.setData({
-      canSubmit: canApply && !loadError && isStudentEmail(email) && CODE_PATTERN.test(code),
+      canSubmit:
+        canApply &&
+        !loading &&
+        !loadError &&
+        isStudentEmail(email, allowedEmailDomains) &&
+        CODE_PATTERN.test(code),
     })
   },
 
@@ -147,8 +173,8 @@ Page({
       this.data.sending
     )
       return
-    if (!isStudentEmail(this.data.email)) {
-      wx.showToast({ title: '请使用 @student.monash.edu 学生邮箱', icon: 'none' })
+    if (!isStudentEmail(this.data.email, this.data.allowedEmailDomains)) {
+      wx.showToast({ title: '请使用页面列出的学生邮箱域名', icon: 'none' })
       return
     }
     this.setData({ sending: true })

@@ -86,6 +86,7 @@ export interface MockDb {
   membership: MockMembership | null
   application: MembershipApplication | null
   membershipEmailOwners: Record<string, number>
+  membershipAllowedEmailDomains: string[]
   staffLoginChallenges: Record<string, { expires_at: number; confirmed_by: number | null }>
   emailCodes: Record<string, MockEmailCode>
   banners: Banner[]
@@ -118,6 +119,7 @@ function createDb(): MockDb {
     membership: null,
     application: null,
     membershipEmailOwners: {},
+    membershipAllowedEmailDomains: ['student.monash.edu'],
     staffLoginChallenges: {},
     emailCodes: {},
     banners: seed.banners,

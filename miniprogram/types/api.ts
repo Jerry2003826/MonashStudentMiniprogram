@@ -31,6 +31,10 @@ export interface Paginated<T> {
 
 // 会员
 
+export interface MembershipConfig {
+  allowed_email_domains: string[]
+}
+
 export type MembershipState = 'none' | 'active' | 'expired' | 'revoked'
 
 export type StaffRole = 'owner' | 'reviewer' | 'editor'

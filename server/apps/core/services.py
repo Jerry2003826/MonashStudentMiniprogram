@@ -18,6 +18,7 @@ from django.views.decorators.debug import sensitive_variables
 
 from . import wechat_safety
 from .errors import ServiceError
+from .membership_config import allowed_email_domains
 from .models import (
     Application,
     AuditLog,
@@ -69,7 +70,7 @@ def normalize_email(email: str) -> str:
         validate_email(email)
     except ValidationError as exc:
         raise ServiceError(422, "VALIDATION_ERROR", "邮箱格式不正确") from exc
-    if email.rsplit("@", 1)[-1] not in settings.MEMBERSHIP_ALLOWED_EMAIL_DOMAINS:
+    if email.rsplit("@", 1)[-1] not in allowed_email_domains():
         raise ServiceError(422, "EMAIL_DOMAIN_NOT_ALLOWED", "请使用允许的学生邮箱")
     return email
 

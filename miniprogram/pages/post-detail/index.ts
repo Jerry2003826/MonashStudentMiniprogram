@@ -21,6 +21,21 @@ function toView(comment: Comment): CommentView {
   return { ...comment, timeText: formatRelativeTime(comment.created_at) }
 }
 
+function mergeComments(
+  current: CommentView[],
+  incoming: Comment[],
+  replaceExisting = true,
+): CommentView[] {
+  const byId = new Map(current.map((comment) => [comment.id, comment]))
+  for (const comment of incoming) {
+    if (replaceExisting || !byId.has(comment.id)) byId.set(comment.id, toView(comment))
+  }
+  // Locally appended comments may arrive again on later pages, including after review.
+  return [...byId.values()].sort(
+    (a, b) => Date.parse(a.created_at) - Date.parse(b.created_at) || a.id - b.id,
+  )
+}
+
 // 用户在操作菜单里点「取消」时 wx.showActionSheet 会走 fail，这里统一返回 null
 async function pickAction(itemList: string[]): Promise<number | null> {
   try {
@@ -97,7 +112,7 @@ Page({
     try {
       const page = await listComments(this.postId, this.data.commentCursor ?? undefined)
       this.setData({
-        comments: [...this.data.comments, ...page.items.map(toView)],
+        comments: mergeComments(this.data.comments, page.items),
         commentCursor: page.next_cursor,
         hasMoreComments: page.next_cursor !== null,
       })
@@ -156,7 +171,8 @@ Page({
         reply_to_user_id: this.data.replyTo?.id,
       })
       this.setData({
-        comments: [...this.data.comments, toView(comment)],
+        // A page response may already contain a newer moderation state than this submission.
+        comments: mergeComments(this.data.comments, [comment], false),
         'post.comment_count':
           post.comment_count + (comment.moderation_status === 'approved' ? 1 : 0),
         draft: '',

@@ -2,9 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Me, MembershipApplication } from '../../../miniprogram/types/api'
 import { makeMe } from '../helpers/membership'
 
-const mocks = vi.hoisted(() => ({ me: vi.fn(), send: vi.fn(), apply: vi.fn() }))
+const mocks = vi.hoisted(() => ({ me: vi.fn(), config: vi.fn(), send: vi.fn(), apply: vi.fn() }))
 vi.mock('../../../miniprogram/services/auth', () => ({ fetchMe: mocks.me }))
 vi.mock('../../../miniprogram/services/api/membership', () => ({
+  fetchMembershipConfig: mocks.config,
   sendEmailCode: mocks.send,
   verifyEmail: mocks.apply,
 }))
@@ -46,6 +47,7 @@ let navigate: ReturnType<typeof vi.fn>
 beforeEach(async () => {
   vi.resetModules()
   vi.clearAllMocks()
+  mocks.config.mockResolvedValue({ allowed_email_domains: ['student.monash.edu'] })
   navigate = vi.fn()
   vi.stubGlobal('wx', {
     setNavigationBarTitle: vi.fn(),
